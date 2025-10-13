@@ -281,6 +281,13 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         - Higher volatility = wider range of possible outcomes
         - Consider conservative estimates for retirement planning
         """)
+    
+    # Footer with LinkedIn link
+    st.markdown("---")
+    st.markdown(
+        "Built by Nikunj - [Connect on LinkedIn](https://www.linkedin.com/in/parikhnikunj/)",
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
