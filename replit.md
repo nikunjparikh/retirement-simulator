@@ -25,6 +25,16 @@ This is a Monte Carlo simulation-based retirement planning application built wit
    - **Personalized Interpretation**: Added "What This Means For You" section with age-based analysis
    - Improved user guidance with context-aware recommendations
 
+5. **Mobile-First Layout Redesign**: Converted from wide two-column to vertical single-column layout
+   - Removed `layout="wide"` configuration for default centered responsive layout
+   - Eliminated all column-based layouts (`st.columns()`) throughout the application
+   - All inputs and results now stack vertically for optimal mobile experience
+   - Added dividers between sections for improved visual hierarchy
+   - Run Simulation button now spans full container width
+   - Charts are fully responsive (89% width on mobile, centered on desktop)
+   - Metrics display inline with pipe separators instead of separate boxes
+   - Tested and verified on both mobile (375px) and desktop (1280px) viewports
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
