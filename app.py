@@ -100,7 +100,16 @@ def main():
         max_value=15.0, 
         value=6.0, 
         step=0.1,
-        help="Expected annual inflation rate (±3% variance will be applied)"
+        help="Expected average annual inflation rate"
+    )
+    
+    inflation_volatility = st.slider(
+        "Inflation Volatility (%)", 
+        min_value=0.5, 
+        max_value=10.0, 
+        value=3.0, 
+        step=0.5,
+        help="Uncertainty in inflation rate - higher values mean more variable inflation"
     )
     
     expected_return = st.slider(
@@ -109,7 +118,16 @@ def main():
         max_value=20.0, 
         value=10.0, 
         step=0.1,
-        help="Expected annual return on investment (±3% variance will be applied)"
+        help="Expected average annual return on investment"
+    )
+    
+    return_volatility = st.slider(
+        "Return Volatility (%)", 
+        min_value=0.5, 
+        max_value=20.0, 
+        value=12.0, 
+        step=0.5,
+        help="Uncertainty in returns - higher values mean more variable returns (typical stock market ~15%)"
     )
     
     num_simulations = st.selectbox(
@@ -140,6 +158,8 @@ def main():
                     monthly_expenses=monthly_expenses,
                     expected_inflation=expected_inflation / 100,
                     expected_return=expected_return / 100,
+                    inflation_volatility=inflation_volatility / 100,
+                    return_volatility=return_volatility / 100,
                     num_simulations=num_simulations,
                     max_years=max_retirement_years
                 )
@@ -235,9 +255,15 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         **Monte Carlo Simulation Details:**
         
         - **Number of Simulations:** {simulator.num_simulations:,}
-        - **Inflation Rate Range:** {(simulator.expected_inflation - 0.03)*100:.1f}% to {(simulator.expected_inflation + 0.03)*100:.1f}%
-        - **Return Rate Range:** {(simulator.expected_return - 0.03)*100:.1f}% to {(simulator.expected_return + 0.03)*100:.1f}%
-        - **Distribution:** Normal distribution with ±3% standard deviation
+        - **Expected Inflation:** {simulator.expected_inflation*100:.1f}% (volatility: {simulator.inflation_volatility*100:.1f}%)
+        - **Expected Return:** {simulator.expected_return*100:.1f}% (volatility: {simulator.return_volatility*100:.1f}%)
+        - **Distribution Model:** Log-normal distribution
+        
+        **Why Log-Normal Distribution?**
+        - Ensures rates are always positive (no impossible negative returns)
+        - Better models the multiplicative nature of compound returns
+        - Standard in financial modeling (Black-Scholes, stock prices, etc.)
+        - Realistic asymmetry: +50% and -50% returns are NOT equivalent
         
         **Key Assumptions:**
         - Monthly expenses increase with inflation each year
@@ -252,7 +278,7 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         
         **Risk Assessment:**
         - Success rate shows probability of corpus lasting 20+ years
-        - Higher success rates indicate more sustainable retirement plans
+        - Higher volatility = wider range of possible outcomes
         - Consider conservative estimates for retirement planning
         """)
 

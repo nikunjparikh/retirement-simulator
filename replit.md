@@ -52,6 +52,23 @@ This is a Monte Carlo simulation-based retirement planning application built wit
    - **Auto-formatting**: Uses Indian numbering system (K for thousands, L for lakhs, Cr for crores)
    - **Dynamic Updates**: Captions update automatically when values change
 
+8. **Log-Normal Distribution & Configurable Volatility**: Enhanced statistical modeling for more realistic simulations
+   - **Log-Normal Distribution**: Switched from normal to log-normal distribution for rate generation
+     - Ensures rates are always positive (no artificial flooring)
+     - Better models multiplicative nature of compound returns
+     - Standard in financial modeling (Black-Scholes, stock price models)
+     - Realistic asymmetry: +50% and -50% returns are NOT symmetric
+   - **Configurable Volatility Parameters**:
+     - Inflation Volatility slider: 0.5% to 10% (default 3%)
+     - Return Volatility slider: 0.5% to 20% (default 12%)
+     - Higher volatility = wider range of possible outcomes
+     - Users can model different market uncertainty scenarios
+   - **Mathematical Implementation**:
+     - Converts mean and volatility to log-normal parameters (mu, sigma)
+     - mu = ln(m² / √(m² + s²))
+     - sigma = √(ln(1 + (s/m)²))
+     - Where m = expected rate, s = volatility
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -72,13 +89,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Processing & Simulation
 **Core Engine**: Monte Carlo simulation using NumPy
-- **Decision**: Implement stochastic modeling with normal distribution for inflation and return rates
+- **Decision**: Implement stochastic modeling with log-normal distribution for inflation and return rates
 - **Rationale**: Monte Carlo methods provide probabilistic forecasts that account for market uncertainty
 - **Implementation**: 
-  - Default 1000 simulations for statistical reliability
+  - Default 2500 simulations for statistical reliability
   - Maximum 50-year simulation horizon to prevent infinite loops
-  - ±3% standard deviation for both inflation and return rates
-- **Pros**: Captures uncertainty, provides confidence intervals, realistic modeling
+  - User-configurable volatility (inflation: 0.5-10%, returns: 0.5-20%)
+  - Log-normal distribution ensures positive rates and realistic asymmetry
+- **Pros**: Captures uncertainty, provides confidence intervals, realistic modeling, always positive rates
 - **Cons**: Computationally intensive for large simulation counts
 
 **Number Formatting**: Indian numbering system support
@@ -114,15 +132,22 @@ Preferred communication style: Simple, everyday language.
 
 ### Statistical Methodology
 **Stochastic Rate Generation**:
-- **Decision**: Use normal distribution for inflation and return rate randomization
-- **Parameters**: Mean = expected rate, Standard Deviation = 3%
-- **Rationale**: Normal distribution is standard for financial modeling, captures market variability
-- **Alternative Considered**: Historical bootstrap sampling (more data-dependent, less flexible)
+- **Decision**: Use log-normal distribution for inflation and return rate randomization
+- **Parameters**: 
+  - Mean = expected rate (user-configurable)
+  - Volatility = user-configurable (inflation: 0.5-10%, returns: 0.5-20%)
+  - Converts to log-normal parameters: mu = ln(m² / √(m² + s²)), sigma = √(ln(1 + (s/m)²))
+- **Rationale**: 
+  - Log-normal ensures rates are always positive (no artificial flooring)
+  - Better models multiplicative compound returns (standard in Black-Scholes)
+  - Captures realistic asymmetry in financial returns
+  - User-configurable volatility allows modeling different market conditions
+- **Alternative Considered**: Normal distribution (previous implementation, could produce negative rates)
 
 **Result Aggregation**: Percentile-based analysis
 - **Decision**: Calculate and display multiple percentiles (10, 25, 50, 75, 90) plus mean
 - **Rationale**: Provides comprehensive view of outcome distribution from pessimistic to optimistic
-- **Implementation**: Track corpus values across all simulations at each time step
+- **Implementation**: Track corpus values across all simulations at each time step with monthly precision
 
 ## External Dependencies
 

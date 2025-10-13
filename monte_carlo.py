@@ -4,8 +4,9 @@ from typing import Dict, List, Tuple
 
 class MonteCarloSimulator:
     def __init__(self, current_corpus: float, monthly_expenses: float, 
-                 expected_inflation: float, expected_return: float, num_simulations: int = 1000,
-                 max_years: int = 50):
+                 expected_inflation: float, expected_return: float, 
+                 inflation_volatility: float = 0.03, return_volatility: float = 0.12,
+                 num_simulations: int = 1000, max_years: int = 50):
         """
         Initialize the Monte Carlo simulator for retirement planning.
         
@@ -14,6 +15,8 @@ class MonteCarloSimulator:
             monthly_expenses: Current monthly expenses
             expected_inflation: Expected inflation rate (as decimal, e.g., 0.06 for 6%)
             expected_return: Expected return rate (as decimal, e.g., 0.10 for 10%)
+            inflation_volatility: Volatility (std dev) of inflation (as decimal, e.g., 0.03 for 3%)
+            return_volatility: Volatility (std dev) of returns (as decimal, e.g., 0.12 for 12%)
             num_simulations: Number of Monte Carlo simulations to run
             max_years: Maximum years to simulate (defaults to 50)
         """
@@ -23,37 +26,53 @@ class MonteCarloSimulator:
         self.expected_return = expected_return
         self.num_simulations = num_simulations
         
-        # Variance parameters (±3%)
-        self.inflation_std = 0.03
-        self.return_std = 0.03
+        # Volatility parameters (user-configurable)
+        self.inflation_volatility = inflation_volatility
+        self.return_volatility = return_volatility
         
         # Maximum years to simulate (to prevent infinite loops)
         self.max_years = max_years
     
     def generate_random_rates(self) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Generate random inflation and return rates for all simulations.
+        Generate random inflation and return rates using log-normal distribution.
+        
+        Log-normal distribution ensures rates are always positive and better models
+        the multiplicative nature of compound returns.
         
         Returns:
             Tuple of (inflation_rates, return_rates) arrays
         """
-        # Generate random rates using normal distribution
-        inflation_rates = np.random.normal(
-            self.expected_inflation, 
-            self.inflation_std, 
+        # Convert to log-normal parameters (mu, sigma)
+        # For log-normal: if we want mean=m and std=s, then:
+        # mu = ln(m^2 / sqrt(m^2 + s^2))
+        # sigma = sqrt(ln(1 + (s/m)^2))
+        
+        # Inflation rates
+        m_inf = self.expected_inflation
+        s_inf = self.inflation_volatility
+        mu_inf = np.log(m_inf**2 / np.sqrt(m_inf**2 + s_inf**2))
+        sigma_inf = np.sqrt(np.log(1 + (s_inf/m_inf)**2))
+        
+        inflation_rates = np.random.lognormal(
+            mu_inf, 
+            sigma_inf, 
             (self.num_simulations, self.max_years)
         )
         
-        return_rates = np.random.normal(
-            self.expected_return, 
-            self.return_std, 
+        # Return rates
+        m_ret = self.expected_return
+        s_ret = self.return_volatility
+        mu_ret = np.log(m_ret**2 / np.sqrt(m_ret**2 + s_ret**2))
+        sigma_ret = np.sqrt(np.log(1 + (s_ret/m_ret)**2))
+        
+        return_rates = np.random.lognormal(
+            mu_ret, 
+            sigma_ret, 
             (self.num_simulations, self.max_years)
         )
         
-        # Ensure rates don't go negative (minimum 0.1%)
-        inflation_rates = np.maximum(inflation_rates, 0.001)
-        return_rates = np.maximum(return_rates, 0.001)
-        
+        # Log-normal naturally produces positive values, no need to floor them
         return inflation_rates, return_rates
     
     def simulate_single_scenario(self, inflation_rates: np.ndarray, 
