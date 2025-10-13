@@ -6,9 +6,13 @@ This is a Monte Carlo simulation-based retirement planning application built wit
 
 ## Recent Changes (January 2025)
 
-1. **Input Model Update**: Changed from "Current Age" to "Retirement Age" with life expectancy slider (70-90 years)
-   - Simulations now run for the actual retirement period (life expectancy - retirement age)
-   - Added validation to ensure life expectancy > retirement age
+1. **Input Model Update**: Added dual-age input with inflation-adjusted corpus calculation
+   - **Current Age & Retirement Age**: Users now enter both current age and planned retirement age
+   - **Target Corpus in Current Terms**: Users specify retirement corpus in today's money
+   - **Automatic Inflation Adjustment**: Calculates inflation-adjusted corpus based on years until retirement
+   - **Formula**: Adjusted Corpus = Target Corpus × (1 + inflation_rate)^years_until_retirement
+   - **Validation**: Ensures current age < retirement age < life expectancy
+   - **Display**: Shows both target corpus (current terms) and inflation-adjusted corpus (at retirement)
 
 2. **Number Formatting Enhancement**: Implemented Indian numbering system display
    - Added `format_indian_number()` helper function

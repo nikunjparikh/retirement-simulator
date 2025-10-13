@@ -47,6 +47,15 @@ def main():
     st.header("📊 Input Parameters")
     
     # User inputs
+    current_age = st.number_input(
+        "Current Age", 
+        min_value=18, 
+        max_value=80, 
+        value=30, 
+        step=1,
+        help="Your current age"
+    )
+    
     retirement_age = st.number_input(
         "Retirement Age", 
         min_value=40, 
@@ -65,13 +74,13 @@ def main():
         help="Your expected life expectancy in years"
     )
     
-    current_corpus = st.number_input(
-        "Current Retirement Corpus", 
+    target_corpus = st.number_input(
+        "Target Retirement Corpus (in current terms)", 
         min_value=100000, 
         max_value=1000000000, 
         value=10000000, 
         step=100000,
-        help="Your total retirement savings"
+        help="Your target retirement corpus in today's money (will be adjusted for inflation until retirement)"
     )
     
     monthly_expenses = st.number_input(
@@ -114,16 +123,29 @@ def main():
     
     # Results Section
     if run_simulation:
-        # Validate that life expectancy is greater than retirement age
-        if life_expectancy <= retirement_age:
+        # Validate ages
+        if current_age >= retirement_age:
+            st.error("⚠️ Current age must be less than retirement age!")
+        elif life_expectancy <= retirement_age:
             st.error("⚠️ Life expectancy must be greater than retirement age!")
         else:
+            # Calculate inflation-adjusted retirement corpus
+            years_until_retirement = retirement_age - current_age
+            inflation_adjusted_corpus = target_corpus * ((1 + expected_inflation / 100) ** years_until_retirement)
+            
+            # Display the adjustment
+            st.info(f"""
+            **Inflation Adjustment:** Your target corpus of **{format_indian_number(target_corpus)}** (in today's terms) 
+            will require **{format_indian_number(inflation_adjusted_corpus)}** at retirement in {years_until_retirement} years 
+            (at {expected_inflation}% annual inflation) to maintain the same purchasing power.
+            """)
+            
             max_retirement_years = life_expectancy - retirement_age
             
             with st.spinner("Running Monte Carlo simulation..."):
-                # Initialize simulator
+                # Initialize simulator with inflation-adjusted corpus
                 simulator = MonteCarloSimulator(
-                    current_corpus=current_corpus,
+                    current_corpus=inflation_adjusted_corpus,
                     monthly_expenses=monthly_expenses,
                     expected_inflation=expected_inflation / 100,
                     expected_return=expected_return / 100,
@@ -135,18 +157,18 @@ def main():
                 results = simulator.run_simulation()
                 
                 # Display results
-                display_results(results, retirement_age, life_expectancy, simulator)
+                display_results(results, retirement_age, life_expectancy, simulator, target_corpus, inflation_adjusted_corpus)
     else:
         st.info("👆 Configure your parameters and click 'Run Simulation' to see results")
 
-def display_results(results, retirement_age, life_expectancy, simulator):
+def display_results(results, retirement_age, life_expectancy, simulator, target_corpus, inflation_adjusted_corpus):
     st.header("📈 Simulation Results")
     
     # Primary summary sentence
     median_years = results['median_years']
     optimistic_years = results['optimistic_years']
     conservative_years = results['pessimistic_years']
-    corpus_formatted = format_indian_number(simulator.current_corpus)
+    corpus_formatted = format_indian_number(inflation_adjusted_corpus)
     max_retirement_years = life_expectancy - retirement_age
     
     # Check if corpus survives the full retirement period in all scenarios
