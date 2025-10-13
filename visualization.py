@@ -59,7 +59,7 @@ def create_corpus_chart(simulation_data: Dict) -> go.Figure:
         mode='lines',
         name='Median Scenario',
         line=dict(color='#1f77b4', width=3),
-        hovertemplate='Year: %{x}<br>Corpus: ₹%{y:,.0f}<extra></extra>'
+        hovertemplate='Year: %{x}<br>Corpus: %{y:,.0f}<extra></extra>'
     ))
     
     # Add mean line
@@ -69,14 +69,14 @@ def create_corpus_chart(simulation_data: Dict) -> go.Figure:
         mode='lines',
         name='Mean Scenario',
         line=dict(color='#ff7f0e', width=2, dash='dash'),
-        hovertemplate='Year: %{x}<br>Corpus: ₹%{y:,.0f}<extra></extra>'
+        hovertemplate='Year: %{x}<br>Corpus: %{y:,.0f}<extra></extra>'
     ))
     
     # Update layout
     fig.update_layout(
         title='Retirement Corpus Trajectory Over Time',
         xaxis_title='Years from Now',
-        yaxis_title='Corpus Value (₹)',
+        yaxis_title='Corpus Value',
         hovermode='x unified',
         showlegend=True,
         height=500,

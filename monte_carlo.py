@@ -4,7 +4,8 @@ from typing import Dict, List, Tuple
 
 class MonteCarloSimulator:
     def __init__(self, current_corpus: float, monthly_expenses: float, 
-                 expected_inflation: float, expected_return: float, num_simulations: int = 1000):
+                 expected_inflation: float, expected_return: float, num_simulations: int = 1000,
+                 max_years: int = 50):
         """
         Initialize the Monte Carlo simulator for retirement planning.
         
@@ -14,6 +15,7 @@ class MonteCarloSimulator:
             expected_inflation: Expected inflation rate (as decimal, e.g., 0.06 for 6%)
             expected_return: Expected return rate (as decimal, e.g., 0.10 for 10%)
             num_simulations: Number of Monte Carlo simulations to run
+            max_years: Maximum years to simulate (defaults to 50)
         """
         self.current_corpus = current_corpus
         self.monthly_expenses = monthly_expenses
@@ -26,7 +28,7 @@ class MonteCarloSimulator:
         self.return_std = 0.03
         
         # Maximum years to simulate (to prevent infinite loops)
-        self.max_years = 50
+        self.max_years = max_years
     
     def generate_random_rates(self) -> Tuple[np.ndarray, np.ndarray]:
         """
