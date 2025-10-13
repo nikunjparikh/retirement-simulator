@@ -170,7 +170,8 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
     median_years = results['median_years']
     optimistic_years = results['optimistic_years']
     conservative_years = results['pessimistic_years']
-    corpus_formatted = format_indian_number(inflation_adjusted_corpus)
+    target_corpus_formatted = format_indian_number(target_corpus)
+    inflation_adjusted_formatted = format_indian_number(inflation_adjusted_corpus)
     max_retirement_years = life_expectancy - retirement_age
     
     # Check if corpus survives the full retirement period in all scenarios
@@ -182,7 +183,7 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         
         st.markdown(f"""
         ### Summary
-        🎉 **Great News!** Your retirement corpus of **{corpus_formatted}** is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
+        🎉 **Great News!** Your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
         
         At the end of your retirement period, your remaining corpus would be:
         - **{final_median}** in the median scenario
@@ -197,13 +198,13 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
             # Values are very close, show 2 decimal places for clarity
             st.markdown(f"""
             ### Summary
-            Based on the data you shared, your current retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
+            Based on the data you shared, your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
             """)
         else:
             # Values differ meaningfully, show 1 decimal place
             st.markdown(f"""
             ### Summary
-            Based on the data you shared, your current retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
+            Based on the data you shared, your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
             """)
     
     st.markdown("---")
