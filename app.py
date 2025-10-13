@@ -37,9 +37,8 @@ def main():
         page_icon="💰"
     )
     
-    st.title("💰 Retirement Corpus Calculator")
-    st.markdown("Monte Carlo Simulation for Retirement Planning")
-    st.markdown("Estimate how long your savings will last under varying market conditions")
+    st.title("🌴 Are you ready to retire?")
+    st.markdown("Find out how long your retirement savings will last. This calculator runs thousands of simulations to show you different scenarios based on varying market conditions. Get a realistic picture of your retirement readiness with median, optimistic, and conservative estimates.")
     
     st.divider()
     
