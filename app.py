@@ -147,11 +147,40 @@ def display_results(results, retirement_age, life_expectancy, simulator):
     optimistic_years = results['optimistic_years']
     conservative_years = results['pessimistic_years']
     corpus_formatted = format_indian_number(simulator.current_corpus)
+    max_retirement_years = life_expectancy - retirement_age
     
-    st.markdown(f"""
-    ### Summary
-    Based on the data you shared, your current retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
-    """)
+    # Check if corpus survives the full retirement period in all scenarios
+    if results.get('all_scenarios_survive', False):
+        # Show remaining corpus values instead of years
+        final_conservative = format_indian_number(results['final_corpus_conservative'])
+        final_median = format_indian_number(results['final_corpus_median'])
+        final_optimistic = format_indian_number(results['final_corpus_optimistic'])
+        
+        st.markdown(f"""
+        ### Summary
+        🎉 **Great News!** Your retirement corpus of **{corpus_formatted}** is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
+        
+        At the end of your retirement period, your remaining corpus would be:
+        - **{final_median}** in the median scenario
+        - **{final_optimistic}** in the optimistic scenario  
+        - **{final_conservative}** in the conservative scenario
+        """)
+    else:
+        # Show years lasted (original behavior)
+        # Check if values are very close (within 0.5 years) - if so, show more precision
+        year_range = max(median_years, optimistic_years, conservative_years) - min(median_years, optimistic_years, conservative_years)
+        if year_range < 0.5:
+            # Values are very close, show 2 decimal places for clarity
+            st.markdown(f"""
+            ### Summary
+            Based on the data you shared, your current retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
+            """)
+        else:
+            # Values differ meaningfully, show 1 decimal place
+            st.markdown(f"""
+            ### Summary
+            Based on the data you shared, your current retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
+            """)
     
     st.markdown("---")
     
@@ -189,7 +218,19 @@ def display_results(results, retirement_age, life_expectancy, simulator):
     st.write("")  # Add some spacing
     
     # Analysis
-    if conservative_years >= max_possible_years:
+    if results.get('all_scenarios_survive', False):
+        # All scenarios survive - show positive message with remaining corpus info
+        final_conservative = format_indian_number(results['final_corpus_conservative'])
+        st.success(f"""
+        **Excellent Position!** Your corpus is projected to last your entire retirement in all scenarios. 
+        Even in the conservative scenario, you would have **{final_conservative}** remaining at age {life_expectancy}. 
+        Your retirement plan appears very solid. You might consider:
+        - Retiring earlier than planned
+        - Increasing your lifestyle expenses in retirement
+        - Leaving a legacy or making charitable contributions
+        - Helping family members financially
+        """)
+    elif conservative_years >= max_possible_years:
         st.success(f"""
         **Excellent News!** Even in the conservative scenario, your corpus is projected to last your entire retirement 
         (from age {retirement_age} to {life_expectancy}). Your retirement plan appears very solid.

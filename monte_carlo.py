@@ -57,39 +57,54 @@ class MonteCarloSimulator:
         return inflation_rates, return_rates
     
     def simulate_single_scenario(self, inflation_rates: np.ndarray, 
-                               return_rates: np.ndarray) -> Tuple[float, List[float]]:
+                               return_rates: np.ndarray) -> Tuple[float, List[float], float]:
         """
-        Simulate a single retirement scenario.
+        Simulate a single retirement scenario with monthly precision.
         
         Args:
             inflation_rates: Array of inflation rates for each year
             return_rates: Array of return rates for each year
             
         Returns:
-            Tuple of (years_lasted, corpus_trajectory)
+            Tuple of (years_lasted, corpus_trajectory, final_corpus)
         """
         corpus = self.current_corpus
         monthly_expenses = self.monthly_expenses
         corpus_trajectory = [corpus]
         
         for year in range(self.max_years):
-            # Apply inflation to expenses
-            annual_expenses = monthly_expenses * 12 * (1 + inflation_rates[year])
-            monthly_expenses = annual_expenses / 12
+            # Calculate annual rates for this year
+            annual_inflation = inflation_rates[year]
+            annual_return = return_rates[year]
             
-            # Apply investment returns
-            corpus = corpus * (1 + return_rates[year])
+            # Convert to monthly rates (approximate)
+            monthly_return = (1 + annual_return) ** (1/12) - 1
+            monthly_inflation = (1 + annual_inflation) ** (1/12) - 1
             
-            # Subtract annual expenses
-            corpus = corpus - annual_expenses
+            # Track corpus through each month of the year
+            year_start_corpus = corpus
+            for month in range(12):
+                # Apply monthly return
+                corpus = corpus * (1 + monthly_return)
+                
+                # Inflate monthly expenses
+                monthly_expenses = monthly_expenses * (1 + monthly_inflation)
+                
+                # Subtract monthly expenses
+                corpus = corpus - monthly_expenses
+                
+                # Check if corpus is depleted
+                if corpus <= 0:
+                    # Return fractional year (year + month/12)
+                    fractional_year = year + (month + 1) / 12
+                    corpus_trajectory.append(0)
+                    return fractional_year, corpus_trajectory, 0
             
+            # End of year - record corpus
             corpus_trajectory.append(max(corpus, 0))
-            
-            # Check if corpus is depleted
-            if corpus <= 0:
-                return year + 1, corpus_trajectory
         
-        return self.max_years, corpus_trajectory
+        # If we made it through max_years, return final corpus value
+        return self.max_years, corpus_trajectory, max(corpus, 0)
     
     def run_simulation(self) -> Dict:
         """
@@ -106,26 +121,41 @@ class MonteCarloSimulator:
         all_trajectories = []
         
         # Run simulations
+        final_corpus_values = []
         for i in range(self.num_simulations):
-            years, trajectory = self.simulate_single_scenario(
+            years, trajectory, final_corpus = self.simulate_single_scenario(
                 inflation_rates[i], return_rates[i]
             )
             years_lasted.append(years)
             all_trajectories.append(trajectory)
+            final_corpus_values.append(final_corpus)
         
         # Calculate statistics
         years_array = np.array(years_lasted)
+        final_corpus_array = np.array(final_corpus_values)
+        
+        pessimistic_years = np.percentile(years_array, 25)
+        median_years = np.median(years_array)
+        optimistic_years = np.percentile(years_array, 75)
+        
+        # Check if key scenarios all survive the full retirement period
+        # Use the conservative (25th percentile) as the threshold
+        all_scenarios_survive = pessimistic_years >= self.max_years
         
         results = {
             'years_lasted': years_lasted,
             'mean_years': np.mean(years_array),
-            'median_years': np.median(years_array),
-            'pessimistic_years': np.percentile(years_array, 25),
-            'optimistic_years': np.percentile(years_array, 75),
+            'median_years': median_years,
+            'pessimistic_years': pessimistic_years,
+            'optimistic_years': optimistic_years,
             'min_years': np.min(years_array),
             'max_years': np.max(years_array),
             'std_years': np.std(years_array),
             'success_rate': np.sum(years_array >= 20) / len(years_array) * 100,
+            'final_corpus_conservative': np.percentile(final_corpus_array, 25),
+            'final_corpus_median': np.percentile(final_corpus_array, 50),
+            'final_corpus_optimistic': np.percentile(final_corpus_array, 75),
+            'all_scenarios_survive': all_scenarios_survive,
             'simulation_data': self._prepare_simulation_data(all_trajectories, years_lasted)
         }
         
