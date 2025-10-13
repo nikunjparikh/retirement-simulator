@@ -35,6 +35,15 @@ This is a Monte Carlo simulation-based retirement planning application built wit
    - Metrics display inline with pipe separators instead of separate boxes
    - Tested and verified on both mobile (375px) and desktop (1280px) viewports
 
+6. **Monte Carlo Simulation Enhancement**: Fixed scenario differentiation issue
+   - **Problem**: All scenarios (median, optimistic, conservative) showed identical values when corpus lasted full retirement or depleted around same time
+   - **Monthly Precision**: Changed simulation from annual to monthly tracking for fractional year accuracy
+   - **Smart Survival Detection**: Changed from requiring all simulations to survive to checking if conservative (25th percentile) survives
+   - **Final Corpus Tracking**: Now tracks remaining corpus when retirement period is fully covered
+   - **Adaptive Display**: Shows remaining corpus values when corpus survives, fractional years when it depletes
+   - **Precision Control**: Displays 2 decimals when scenarios are close (<0.5 year range), 1 decimal otherwise
+   - **Result**: Scenarios now show meaningful differences (e.g., 5.3, 5.6, 5.8 years instead of all showing 6.0)
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
