@@ -2,7 +2,28 @@
 
 ## Overview
 
-This is a Monte Carlo simulation-based retirement planning application built with Streamlit. The application helps users estimate how long their retirement savings will last under varying market conditions by running multiple simulations with randomized inflation and return rates. Users can input their current corpus, monthly expenses, expected inflation, and expected return rates to generate probabilistic forecasts of their retirement fund longevity.
+This is a Monte Carlo simulation-based retirement planning application built with Streamlit. The application helps users estimate how long their retirement savings will last under varying market conditions by running multiple simulations with randomized inflation and return rates. Users can input their retirement age, life expectancy, corpus, monthly expenses, expected inflation, and expected return rates to generate probabilistic forecasts of their retirement fund longevity.
+
+## Recent Changes (January 2025)
+
+1. **Input Model Update**: Changed from "Current Age" to "Retirement Age" with life expectancy slider (70-90 years)
+   - Simulations now run for the actual retirement period (life expectancy - retirement age)
+   - Added validation to ensure life expectancy > retirement age
+
+2. **Number Formatting Enhancement**: Implemented Indian numbering system display
+   - Added `format_indian_number()` helper function
+   - Formats: Crores (Cr), Lakhs (L), and Thousands (K)
+   - Examples: 10000000 → "1.00 Cr", 500000 → "5 L", 25000 → "25K"
+
+3. **Currency Symbol Removal**: Removed all rupee (₹) symbols from the interface
+   - Cleaner presentation for international users
+   - Values displayed with formatted numbers only
+
+4. **Results Presentation Redesign**:
+   - **Summary**: Single sentence format showing median, optimistic, and conservative scenarios together
+   - **Scenario Explanations**: Added "Understanding the Scenarios" section with plain-language explanations
+   - **Personalized Interpretation**: Added "What This Means For You" section with age-based analysis
+   - Improved user guidance with context-aware recommendations
 
 ## User Preferences
 
