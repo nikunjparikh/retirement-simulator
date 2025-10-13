@@ -82,6 +82,7 @@ def main():
         step=100000,
         help="Your target retirement corpus in today's money (will be adjusted for inflation until retirement)"
     )
+    st.caption(f"💡 That's **{format_indian_number(target_corpus)}**")
     
     monthly_expenses = st.number_input(
         "Monthly Expenses at Retirement", 
@@ -91,6 +92,7 @@ def main():
         step=5000,
         help="Expected monthly expenses when you retire (will be adjusted for inflation)"
     )
+    st.caption(f"💡 That's **{format_indian_number(monthly_expenses)}** per month")
     
     expected_inflation = st.slider(
         "Expected Inflation Rate (%)", 

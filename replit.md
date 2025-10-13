@@ -48,6 +48,12 @@ This is a Monte Carlo simulation-based retirement planning application built wit
    - **Precision Control**: Displays 2 decimals when scenarios are close (<0.5 year range), 1 decimal otherwise
    - **Result**: Scenarios now show meaningful differences (e.g., 5.3, 5.6, 5.8 years instead of all showing 6.0)
 
+7. **Formatted Value Display**: Added caption helpers below input fields for easy comprehension
+   - **Target Corpus Caption**: Shows formatted value below input (e.g., "💡 That's **1.00 Cr**")
+   - **Monthly Expenses Caption**: Shows formatted value with context (e.g., "💡 That's **50.0K** per month")
+   - **Auto-formatting**: Uses Indian numbering system (K for thousands, L for lakhs, Cr for crores)
+   - **Dynamic Updates**: Captions update automatically when values change
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
