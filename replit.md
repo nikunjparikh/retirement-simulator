@@ -6,13 +6,12 @@ This is a Monte Carlo simulation-based retirement planning application built wit
 
 ## Recent Changes (January 2025)
 
-1. **Input Model Update**: Added dual-age input with inflation-adjusted corpus calculation
+1. **Input Model Update**: Added dual-age input with direct corpus usage
    - **Current Age & Retirement Age**: Users now enter both current age and planned retirement age
-   - **Target Corpus in Current Terms**: Users specify retirement corpus in today's money
-   - **Automatic Inflation Adjustment**: Calculates inflation-adjusted corpus based on years until retirement
-   - **Formula**: Adjusted Corpus = Target Corpus × (1 + inflation_rate)^years_until_retirement
+   - **Retirement Corpus**: Users specify their retirement corpus amount directly
+   - **No Inflation Adjustment**: Corpus value is used exactly as entered (no inflation calculation)
    - **Validation**: Ensures current age < retirement age < life expectancy
-   - **Display**: Shows both target corpus (current terms) and inflation-adjusted corpus (at retirement)
+   - **Simplified Display**: Shows corpus amount as entered without qualifiers
 
 2. **Number Formatting Enhancement**: Implemented Indian numbering system display
    - Added `format_indian_number()` helper function
@@ -25,9 +24,8 @@ This is a Monte Carlo simulation-based retirement planning application built wit
 
 4. **Results Presentation Redesign**:
    - **Summary**: Single sentence format showing median, optimistic, and conservative scenarios together
-   - **Scenario Explanations**: Added "Understanding the Scenarios" section with plain-language explanations
-   - **Personalized Interpretation**: Added "What This Means For You" section with age-based analysis
-   - Improved user guidance with context-aware recommendations
+   - **Scenario Explanations**: "Understanding the Scenarios" section with plain-language explanations
+   - **Streamlined Display**: Removed recommendations and personalized interpretation sections for cleaner presentation
 
 5. **Mobile-First Layout Redesign**: Converted from wide two-column to vertical single-column layout
    - Removed `layout="wide"` configuration for default centered responsive layout

@@ -75,12 +75,12 @@ def main():
     )
     
     target_corpus = st.number_input(
-        "Target Retirement Corpus (in current terms)", 
+        "Retirement Corpus", 
         min_value=100000, 
         max_value=1000000000, 
         value=10000000, 
         step=100000,
-        help="Your target retirement corpus in today's money (will be adjusted for inflation until retirement)"
+        help="Your retirement corpus amount"
     )
     st.caption(f"💡 That's **{format_indian_number(target_corpus)}**")
     
@@ -131,23 +131,12 @@ def main():
         elif life_expectancy <= retirement_age:
             st.error("⚠️ Life expectancy must be greater than retirement age!")
         else:
-            # Calculate inflation-adjusted retirement corpus
-            years_until_retirement = retirement_age - current_age
-            inflation_adjusted_corpus = target_corpus * ((1 + expected_inflation / 100) ** years_until_retirement)
-            
-            # Display the adjustment
-            st.info(f"""
-            **Inflation Adjustment:** Your target corpus of **{format_indian_number(target_corpus)}** (in today's terms) 
-            will require **{format_indian_number(inflation_adjusted_corpus)}** at retirement in {years_until_retirement} years 
-            (at {expected_inflation}% annual inflation) to maintain the same purchasing power.
-            """)
-            
             max_retirement_years = life_expectancy - retirement_age
             
             with st.spinner("Running Monte Carlo simulation..."):
-                # Initialize simulator with inflation-adjusted corpus
+                # Initialize simulator with target corpus
                 simulator = MonteCarloSimulator(
-                    current_corpus=inflation_adjusted_corpus,
+                    current_corpus=target_corpus,
                     monthly_expenses=monthly_expenses,
                     expected_inflation=expected_inflation / 100,
                     expected_return=expected_return / 100,
@@ -159,19 +148,18 @@ def main():
                 results = simulator.run_simulation()
                 
                 # Display results
-                display_results(results, retirement_age, life_expectancy, simulator, target_corpus, inflation_adjusted_corpus)
+                display_results(results, retirement_age, life_expectancy, simulator, target_corpus)
     else:
         st.info("👆 Configure your parameters and click 'Run Simulation' to see results")
 
-def display_results(results, retirement_age, life_expectancy, simulator, target_corpus, inflation_adjusted_corpus):
+def display_results(results, retirement_age, life_expectancy, simulator, target_corpus):
     st.header("📈 Simulation Results")
     
     # Primary summary sentence
     median_years = results['median_years']
     optimistic_years = results['optimistic_years']
     conservative_years = results['pessimistic_years']
-    target_corpus_formatted = format_indian_number(target_corpus)
-    inflation_adjusted_formatted = format_indian_number(inflation_adjusted_corpus)
+    corpus_formatted = format_indian_number(target_corpus)
     max_retirement_years = life_expectancy - retirement_age
     
     # Check if corpus survives the full retirement period in all scenarios
@@ -183,7 +171,7 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         
         st.markdown(f"""
         ### Summary
-        🎉 **Great News!** Your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
+        🎉 **Great News!** Your retirement corpus of **{corpus_formatted}** is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
         
         At the end of your retirement period, your remaining corpus would be:
         - **{final_median}** in the median scenario
@@ -198,13 +186,13 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
             # Values are very close, show 2 decimal places for clarity
             st.markdown(f"""
             ### Summary
-            Based on the data you shared, your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
+            Based on the data you shared, your retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
             """)
         else:
             # Values differ meaningfully, show 1 decimal place
             st.markdown(f"""
             ### Summary
-            Based on the data you shared, your target retirement corpus of **{target_corpus_formatted}** (in today's terms) is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
+            Based on the data you shared, your retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
             """)
     
     st.markdown("---")
@@ -231,55 +219,6 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
     """)
     
     st.markdown("---")
-    
-    # Age-based interpretation
-    st.subheader("🎯 What This Means For You")
-    
-    max_possible_years = life_expectancy - retirement_age
-    
-    # Key metrics
-    st.markdown(f"**Retirement Age:** {retirement_age} years | **Life Expectancy:** {life_expectancy} years | **Retirement Period:** {max_possible_years} years")
-    
-    st.write("")  # Add some spacing
-    
-    # Analysis
-    if results.get('all_scenarios_survive', False):
-        # All scenarios survive - show positive message with remaining corpus info
-        final_conservative = format_indian_number(results['final_corpus_conservative'])
-        st.success(f"""
-        **Excellent Position!** Your corpus is projected to last your entire retirement in all scenarios. 
-        Even in the conservative scenario, you would have **{final_conservative}** remaining at age {life_expectancy}. 
-        Your retirement plan appears very solid. You might consider:
-        - Retiring earlier than planned
-        - Increasing your lifestyle expenses in retirement
-        - Leaving a legacy or making charitable contributions
-        - Helping family members financially
-        """)
-    elif conservative_years >= max_possible_years:
-        st.success(f"""
-        **Excellent News!** Even in the conservative scenario, your corpus is projected to last your entire retirement 
-        (from age {retirement_age} to {life_expectancy}). Your retirement plan appears very solid.
-        """)
-    elif median_years >= max_possible_years:
-        st.info(f"""
-        **Good Position:** Your corpus is likely to last through retirement in the median scenario. However, the 
-        conservative scenario suggests it may run out around age {retirement_age + conservative_years:.0f}. 
-        Consider building a bit more cushion.
-        """)
-    elif conservative_years < max_possible_years * 0.6:
-        st.error(f"""
-        **Needs Attention:** In the conservative scenario, your corpus may only last until age {retirement_age + conservative_years:.0f}, 
-        which is {max_possible_years - conservative_years:.0f} years short of your life expectancy. 
-        You may need to increase savings, reduce expenses, or delay retirement.
-        """)
-    else:
-        st.warning(f"""
-        **Moderate Risk:** Your corpus shows reasonable sustainability in median scenarios, but conservative projections 
-        suggest potential shortfall around age {retirement_age + conservative_years:.0f}. 
-        Consider strengthening your retirement plan.
-        """)
-    
-    st.divider()
     
     # Charts
     st.subheader("📊 Corpus Trajectory Over Time")
@@ -315,34 +254,6 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         - Success rate shows probability of corpus lasting 20+ years
         - Higher success rates indicate more sustainable retirement plans
         - Consider conservative estimates for retirement planning
-        """)
-    
-    # Recommendations
-    st.subheader("💡 Recommendations")
-    
-    if results['success_rate'] >= 80:
-        st.success("""
-        **Excellent Position!** Your retirement corpus shows high sustainability:
-        - Your current savings plan appears very robust
-        - Consider if you can retire earlier than planned
-        - Monitor and rebalance your portfolio regularly
-        """)
-    elif results['success_rate'] >= 60:
-        st.warning("""
-        **Good but Room for Improvement:**
-        - Your corpus shows reasonable sustainability
-        - Consider increasing your corpus or reducing expenses
-        - Diversify investments to manage risk better
-        - Plan for conservative withdrawal rates
-        """)
-    else:
-        st.error("""
-        **Requires Attention:**
-        - Current corpus may not sustain desired lifestyle
-        - Strongly consider increasing savings rate
-        - Explore ways to reduce monthly expenses
-        - Consider delayed retirement or part-time income
-        - Consult with a financial advisor
         """)
 
 if __name__ == "__main__":
