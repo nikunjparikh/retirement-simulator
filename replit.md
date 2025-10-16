@@ -69,6 +69,17 @@ This is a Monte Carlo simulation-based retirement planning application built wit
      - sigma = √(ln(1 + (s/m)²))
      - Where m = expected rate, s = volatility
 
+9. **User Testing Improvements**: Simplified interface based on user feedback
+   - **Removed Visualizations**: Eliminated Corpus Trajectory and Distribution charts (users found them confusing)
+   - **Fixed Simulation Count**: Removed simulation count selector, fixed at 2500 simulations for consistency
+   - **Smart Recommendations Section**: Added explicit guidance on retirement readiness
+     - **Sufficient Corpus** (conservative ≥ retirement years): Green success message confirming adequacy
+     - **Large Gap** (conservative < 25% of retirement years): Warning that deficit is too large for reliable estimate, general suggestions
+     - **Moderate Deficit** (25% ≤ conservative < retirement years): Calculates required corpus proportionally, shows specific target and additional amount needed
+     - Prevents unrealistic calculations when corpus depletes too quickly
+     - Provides actionable recommendations based on scenario
+   - **Dependency Cleanup**: Removed unused imports (NumPy, Pandas, Plotly) after chart removal
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -121,12 +132,13 @@ Preferred communication style: Simple, everyday language.
 
 ### Module Organization
 **Separation of Concerns**:
-1. **app.py**: Main application entry point, UI components, user input handling
+1. **app.py**: Main application entry point, UI components, user input handling, recommendations logic
 2. **monte_carlo.py**: Simulation logic, statistical calculations, random rate generation
-3. **visualization.py**: Chart creation, data transformation for plotting
+3. **visualization.py**: Chart creation module (deprecated after user testing, charts removed)
 
 - **Decision**: Modular architecture with clear separation
 - **Rationale**: Improves maintainability, testability, and code reuse
+- **Update**: Visualization module deprecated after user feedback showed charts were confusing
 - **Pros**: Easy to modify individual components, supports future extensions
 - **Cons**: More files to manage, requires understanding of module interactions
 
@@ -154,20 +166,20 @@ Preferred communication style: Simple, everyday language.
 ### Core Libraries
 1. **Streamlit**: Web application framework for data apps
    - Purpose: UI rendering, input widgets, layout management
-   - Version: Not specified (recommend pinning in requirements.txt)
+   - Used in: app.py for all UI components
 
 2. **NumPy**: Numerical computing library
    - Purpose: Random number generation, array operations, statistical calculations
-   - Use case: Monte Carlo simulation engine, percentile calculations
+   - Used in: monte_carlo.py for simulation engine and percentile calculations
+   - Note: No longer imported in app.py after visualization removal
 
-3. **Pandas**: Data manipulation library
-   - Purpose: Data structuring, time series handling
-   - Use case: Organizing simulation results, data transformation
+3. **Pandas**: Data manipulation library (deprecated)
+   - Previous use: Organizing simulation results, data transformation
+   - Status: No longer used after chart removal, can be removed from dependencies
 
-4. **Plotly**: Interactive visualization library
-   - Purpose: Creating dynamic, web-based charts
-   - Modules used: `plotly.graph_objects`, `plotly.subplots`, `plotly.express`
-   - Use case: Corpus trajectory charts, distribution visualizations
+4. **Plotly**: Interactive visualization library (deprecated)
+   - Previous use: Creating corpus trajectory and distribution charts
+   - Status: No longer used after user testing feedback, can be removed from dependencies
 
 ### Data Storage
 - **Current Implementation**: No persistent storage
