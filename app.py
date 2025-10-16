@@ -1,10 +1,5 @@
 import streamlit as st
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from monte_carlo import MonteCarloSimulator
-from visualization import create_corpus_chart, create_distribution_chart
 
 def format_indian_number(num):
     """Format number in Indian numbering system (lakhs, crores) or international (thousands, millions, billions)"""
@@ -129,13 +124,6 @@ def main():
         help="Uncertainty in returns - higher values mean more variable returns (typical stock market ~15%)"
     )
     
-    num_simulations = st.selectbox(
-        "Number of Simulations",
-        [1000, 2500, 5000, 10000],
-        index=1,
-        help="Higher numbers provide more accurate results but take longer"
-    )
-    
     run_simulation = st.button("🚀 Run Simulation", type="primary", use_container_width=True)
     
     st.divider()
@@ -159,7 +147,7 @@ def main():
                     expected_return=expected_return / 100,
                     inflation_volatility=inflation_volatility / 100,
                     return_volatility=return_volatility / 100,
-                    num_simulations=num_simulations,
+                    num_simulations=2500,
                     max_years=max_retirement_years
                 )
                 
@@ -239,14 +227,60 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
     
     st.markdown("---")
     
-    # Charts
-    st.subheader("📊 Corpus Trajectory Over Time")
-    corpus_chart = create_corpus_chart(results['simulation_data'])
-    st.plotly_chart(corpus_chart, use_container_width=True)
+    # Recommendations Section
+    st.subheader("💡 Recommendations")
     
-    st.subheader("📈 Distribution of Corpus Longevity")
-    distribution_chart = create_distribution_chart(results['years_lasted'])
-    st.plotly_chart(distribution_chart, use_container_width=True)
+    # Check if corpus is sufficient for full retirement
+    if conservative_years >= max_retirement_years:
+        st.success(f"""
+        ✅ **Your corpus is sufficient!** 
+        
+        Your retirement corpus of **{corpus_formatted}** is enough to cover your entire retirement period of **{max_retirement_years} years** (age {retirement_age} to {life_expectancy}) even in the conservative scenario.
+        
+        You can retire with confidence knowing your savings will likely last throughout your retirement.
+        """)
+    elif conservative_years < max_retirement_years * 0.25:
+        # Corpus lasts less than 25% of retirement period - too large a deficit for meaningful estimate
+        st.error(f"""
+        ⚠️ **Your corpus is significantly insufficient!**
+        
+        In the conservative scenario, your corpus of **{corpus_formatted}** will only last **{conservative_years:.1f} years** out of the **{max_retirement_years} years** you need (age {retirement_age} to {life_expectancy}).
+        
+        **The gap is too large to provide a reliable estimate of required corpus.**
+        
+        Your corpus covers less than 25% of your retirement period. Consider a comprehensive review of your retirement strategy:
+        - Substantially increase your retirement savings
+        - Significantly reduce planned monthly expenses
+        - Delay retirement to accumulate more savings
+        - Re-evaluate your retirement timeline and goals
+        """)
+    else:
+        # Calculate required corpus for full retirement
+        # Proportional scaling based on conservative scenario
+        years_shortage = max_retirement_years - conservative_years
+        required_corpus = target_corpus * (max_retirement_years / conservative_years)
+        required_corpus_formatted = format_indian_number(required_corpus)
+        shortage = required_corpus - target_corpus
+        shortage_formatted = format_indian_number(shortage)
+        
+        st.error(f"""
+        ⚠️ **Your corpus may not be sufficient!**
+        
+        In the conservative scenario, your current corpus of **{corpus_formatted}** will only last **{conservative_years:.1f} years** out of the **{max_retirement_years} years** you need (age {retirement_age} to {life_expectancy}).
+        
+        **You may face a shortage of approximately {years_shortage:.1f} years.**
+        
+        **Estimated Target Corpus Required:** **{required_corpus_formatted}**  
+        (Additional **{shortage_formatted}** needed)
+        
+        Consider:
+        - Increasing your retirement corpus
+        - Reducing monthly expenses
+        - Delaying retirement
+        - Adjusting your investment strategy for better returns
+        """)
+    
+    st.markdown("---")
     
     # Methodology explanation
     with st.expander("🔍 Methodology & Assumptions"):
