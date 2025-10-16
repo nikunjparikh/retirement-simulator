@@ -151,8 +151,72 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
     
     corpus_formatted = format_indian_number(target_corpus)
     
-    # Display results for all three scenarios side-by-side
-    st.markdown("### 📊 Scenario Comparison")
+    # Calculate realistic scenario results first (for recommendations)
+    real_results = scenario_results['Realistic']
+    real_median_years = real_results['median_years']
+    real_years = np.array(real_results['years_lasted'])
+    real_success_rate = (real_years >= max_retirement_years).sum() / len(real_years) * 100
+    
+    # Display prominent recommendations first
+    st.markdown("### 🎯 Your Retirement Readiness")
+    
+    if real_success_rate >= 75:
+        st.success(f"""
+        ## ✅ You're Ready to Retire!
+        
+        Based on our realistic scenario (balanced portfolio), your corpus has a **{real_success_rate:.1f}% success rate** of lasting your entire **{max_retirement_years}-year** retirement period (age {retirement_age} to {life_expectancy}).
+        
+        **Your retirement plan looks solid.** Check the pessimistic scenario below for extra safety planning.
+        """)
+    elif real_success_rate >= 50:
+        st.warning(f"""
+        ## ⚠️ Your Corpus May Be Borderline
+        
+        Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
+        
+        **Recommended Actions:**
+        - 💰 Increase your retirement corpus
+        - 📉 Reduce planned monthly expenses
+        - 📋 Have a backup plan for later retirement years
+        """)
+    else:
+        # Calculate rough estimate of required corpus based on realistic scenario
+        if real_median_years > 0:
+            estimated_multiplier = max_retirement_years / real_median_years
+            required_corpus = target_corpus * estimated_multiplier
+            required_corpus_formatted = format_indian_number(required_corpus)
+            shortage_formatted = format_indian_number(required_corpus - target_corpus)
+            
+            st.error(f"""
+            ## ⚠️ Your Corpus Is Likely Insufficient
+            
+            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate**. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
+            
+            ### 🎯 Target Corpus: **{required_corpus_formatted}**  
+            *(You need an additional **{shortage_formatted}**)*
+            
+            **Recommended Actions:**
+            - 💰 Substantially increase your retirement savings
+            - 📉 Significantly reduce monthly expenses  
+            - ⏰ Delay retirement to save more
+            """)
+        else:
+            st.error(f"""
+            ## ⚠️ Your Corpus Is Significantly Insufficient
+            
+            Your corpus depletes very quickly in the realistic scenario. You need a comprehensive review of your retirement strategy.
+            
+            **Recommended Actions:**
+            - 💰 Substantially increase your retirement savings
+            - 📉 Significantly reduce planned monthly expenses
+            - ⏰ Delay retirement to accumulate more savings
+            """)
+    
+    st.divider()
+    
+    # Display detailed scenario comparison below recommendations
+    st.markdown("### 📊 Detailed Scenario Comparison")
+    st.caption("See how your corpus performs under different market conditions")
     
     # Create three columns for the scenarios
     col1, col2, col3 = st.columns(3)
@@ -162,7 +226,6 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         st.markdown("#### 🌟 Optimistic")
         opt_results = scenario_results['Optimistic']
         opt_median_years = opt_results['median_years']
-        # Calculate success rate: percentage of simulations that lasted full retirement
         opt_years = np.array(opt_results['years_lasted'])
         opt_success_rate = (opt_years >= max_retirement_years).sum() / len(opt_years) * 100
         
@@ -175,10 +238,6 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
     # Realistic Scenario
     with col2:
         st.markdown("#### ⚖️ Realistic")
-        real_results = scenario_results['Realistic']
-        real_median_years = real_results['median_years']
-        real_years = np.array(real_results['years_lasted'])
-        real_success_rate = (real_years >= max_retirement_years).sum() / len(real_years) * 100
         
         st.metric("Success Rate", f"{real_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
         st.metric("Median Years", f"{real_median_years:.1f}", help="Median years until corpus depletion across all simulations")
@@ -200,62 +259,7 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         st.caption("Return: 7% | Volatility: 10%")
         st.caption("Inflation: 8% | Volatility: 4%")
     
-    st.markdown("---")
-    
-    # Recommendations based on realistic scenario
-    st.subheader("💡 Recommendations")
-    
-    if real_success_rate >= 75:
-        st.success(f"""
-        ✅ **Your corpus looks good!** 
-        
-        In the realistic scenario, your corpus has a **{real_success_rate:.1f}% success rate** of lasting your entire retirement period of **{max_retirement_years} years** (age {retirement_age} to {life_expectancy}).
-        
-        You can retire with reasonable confidence. Consider the pessimistic scenario for extra safety planning.
-        """)
-    elif real_success_rate >= 50:
-        st.warning(f"""
-        ⚠️ **Your corpus may be borderline.**
-        
-        In the realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years**.
-        
-        Consider:
-        - Increasing your retirement corpus
-        - Reducing planned monthly expenses
-        - Having a backup plan for later retirement years
-        """)
-    else:
-        # Calculate rough estimate of required corpus based on realistic scenario
-        if real_median_years > 0:
-            estimated_multiplier = max_retirement_years / real_median_years
-            required_corpus = target_corpus * estimated_multiplier
-            required_corpus_formatted = format_indian_number(required_corpus)
-            shortage_formatted = format_indian_number(required_corpus - target_corpus)
-            
-            st.error(f"""
-            ⚠️ **Your corpus is likely insufficient!**
-            
-            In the realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate**. The median duration is **{real_median_years:.1f} years** vs {max_retirement_years} years needed.
-            
-            **Estimated Target Corpus:** **{required_corpus_formatted}**  
-            (Additional **{shortage_formatted}** needed)
-            
-            Consider:
-            - Substantially increasing your retirement savings
-            - Significantly reducing monthly expenses
-            - Delaying retirement to save more
-            """)
-        else:
-            st.error(f"""
-            ⚠️ **Your corpus is significantly insufficient!**
-            
-            Your corpus depletes very quickly in the realistic scenario. Consider a comprehensive review of your retirement strategy:
-            - Substantially increase your retirement savings
-            - Significantly reduce planned monthly expenses
-            - Delay retirement to accumulate more savings
-            """)
-    
-    st.markdown("---")
+    st.divider()
     
     # Methodology explanation
     with st.expander("🔍 Methodology & Assumptions"):
