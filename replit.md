@@ -83,9 +83,9 @@ This is a Monte Carlo simulation-based retirement planning application built wit
 10. **Three-Scenario Simplification**: Replaced user-configurable parameters with three hardcoded scenarios (October 2025)
    - **Removed UI Controls**: Eliminated all inflation/return rate and volatility sliders for maximum simplicity
    - **Hardcoded Scenarios**: Three preset scenarios automatically run:
-     - **🌟 Optimistic**: Return 7% (volatility 10%), Inflation 2.5% (volatility 1.5%)
-     - **⚖️ Realistic**: Return 5% (volatility 12%), Inflation 3% (volatility 2%)
-     - **🌧️ Pessimistic**: Return 3% (volatility 15%), Inflation 4% (volatility 3%)
+     - **🌟 Optimistic (Aggressive, Equity-Heavy)**: Return 12% (volatility 22%), Inflation 5% (volatility 2.5%)
+     - **⚖️ Realistic (Balanced, 60/40 Stocks/Bonds)**: Return 10% (volatility 16%), Inflation 6% (volatility 3%)
+     - **🌧️ Pessimistic (Conservative, Debt-Heavy)**: Return 7% (volatility 10%), Inflation 8% (volatility 4%)
    - **Simulation Count**: Fixed at 1,000 simulations per scenario (3,000 total) for consistency
    - **Side-by-Side Display**: Three-column layout showing success rate and median years for each scenario
    - **Success Rate Precision**: Shows 1 decimal place (e.g., 69.2%) to reveal differences between scenarios

@@ -107,22 +107,22 @@ def main():
                 # Define three scenarios with hardcoded parameters
                 scenarios = {
                     'Optimistic': {
-                        'return': 0.07,
-                        'return_volatility': 0.10,
-                        'inflation': 0.025,
-                        'inflation_volatility': 0.015
+                        'return': 0.12,
+                        'return_volatility': 0.22,
+                        'inflation': 0.05,
+                        'inflation_volatility': 0.025
                     },
                     'Realistic': {
-                        'return': 0.05,
-                        'return_volatility': 0.12,
-                        'inflation': 0.03,
-                        'inflation_volatility': 0.02
+                        'return': 0.10,
+                        'return_volatility': 0.16,
+                        'inflation': 0.06,
+                        'inflation_volatility': 0.03
                     },
                     'Pessimistic': {
-                        'return': 0.03,
-                        'return_volatility': 0.15,
-                        'inflation': 0.04,
-                        'inflation_volatility': 0.03
+                        'return': 0.07,
+                        'return_volatility': 0.10,
+                        'inflation': 0.08,
+                        'inflation_volatility': 0.04
                     }
                 }
                 
@@ -169,8 +169,8 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         st.metric("Success Rate", f"{opt_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
         st.metric("Median Years", f"{opt_median_years:.1f}", help="Median years until corpus depletion across all simulations")
         
-        st.caption("Return: 7% | Volatility: 10%")
-        st.caption("Inflation: 2.5% | Volatility: 1.5%")
+        st.caption("Return: 12% | Volatility: 22%")
+        st.caption("Inflation: 5% | Volatility: 2.5%")
     
     # Realistic Scenario
     with col2:
@@ -183,8 +183,8 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         st.metric("Success Rate", f"{real_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
         st.metric("Median Years", f"{real_median_years:.1f}", help="Median years until corpus depletion across all simulations")
         
-        st.caption("Return: 5% | Volatility: 12%")
-        st.caption("Inflation: 3% | Volatility: 2%")
+        st.caption("Return: 10% | Volatility: 16%")
+        st.caption("Inflation: 6% | Volatility: 3%")
     
     # Pessimistic Scenario
     with col3:
@@ -197,8 +197,8 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         st.metric("Success Rate", f"{pess_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
         st.metric("Median Years", f"{pess_median_years:.1f}", help="Median years until corpus depletion across all simulations")
         
-        st.caption("Return: 3% | Volatility: 15%")
-        st.caption("Inflation: 4% | Volatility: 3%")
+        st.caption("Return: 7% | Volatility: 10%")
+        st.caption("Inflation: 8% | Volatility: 4%")
     
     st.markdown("---")
     
@@ -268,17 +268,17 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         
         **Scenario Parameters:**
         
-        **Optimistic:** Best-case market conditions
+        **Optimistic (Aggressive, Equity-Heavy):** Best-case market conditions
+        - Return: 12% (volatility: 22%)
+        - Inflation: 5% (volatility: 2.5%)
+        
+        **Realistic (Balanced, 60/40 Stocks/Bonds):** Moderate market conditions  
+        - Return: 10% (volatility: 16%)
+        - Inflation: 6% (volatility: 3%)
+        
+        **Pessimistic (Conservative, Debt-Heavy):** Challenging market conditions
         - Return: 7% (volatility: 10%)
-        - Inflation: 2.5% (volatility: 1.5%)
-        
-        **Realistic:** Moderate market conditions  
-        - Return: 5% (volatility: 12%)
-        - Inflation: 3% (volatility: 2%)
-        
-        **Pessimistic:** Challenging market conditions
-        - Return: 3% (volatility: 15%)
-        - Inflation: 4% (volatility: 3%)
+        - Inflation: 8% (volatility: 4%)
         
         **Why Log-Normal Distribution?**
         - Ensures rates are always positive
