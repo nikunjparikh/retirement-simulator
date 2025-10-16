@@ -1,4 +1,5 @@
 import streamlit as st
+import numpy as np
 from monte_carlo import MonteCarloSimulator
 
 def format_indian_number(num):
@@ -88,42 +89,6 @@ def main():
     )
     st.caption(f"💡 That's **{format_indian_number(monthly_expenses)}** per month")
     
-    expected_inflation = st.slider(
-        "Expected Inflation Rate (%)", 
-        min_value=1.0, 
-        max_value=15.0, 
-        value=6.0, 
-        step=0.1,
-        help="Expected average annual inflation rate"
-    )
-    
-    inflation_volatility = st.slider(
-        "Inflation Volatility (%)", 
-        min_value=0.5, 
-        max_value=10.0, 
-        value=3.0, 
-        step=0.5,
-        help="Uncertainty in inflation rate - higher values mean more variable inflation"
-    )
-    
-    expected_return = st.slider(
-        "Expected Return Rate (%)", 
-        min_value=1.0, 
-        max_value=20.0, 
-        value=10.0, 
-        step=0.1,
-        help="Expected average annual return on investment"
-    )
-    
-    return_volatility = st.slider(
-        "Return Volatility (%)", 
-        min_value=0.5, 
-        max_value=20.0, 
-        value=12.0, 
-        step=0.5,
-        help="Uncertainty in returns - higher values mean more variable returns (typical stock market ~15%)"
-    )
-    
     run_simulation = st.button("🚀 Run Simulation", type="primary", use_container_width=True)
     
     st.divider()
@@ -138,147 +103,157 @@ def main():
         else:
             max_retirement_years = life_expectancy - retirement_age
             
-            with st.spinner("Running Monte Carlo simulation..."):
-                # Initialize simulator with target corpus
-                simulator = MonteCarloSimulator(
-                    current_corpus=target_corpus,
-                    monthly_expenses=monthly_expenses,
-                    expected_inflation=expected_inflation / 100,
-                    expected_return=expected_return / 100,
-                    inflation_volatility=inflation_volatility / 100,
-                    return_volatility=return_volatility / 100,
-                    num_simulations=2500,
-                    max_years=max_retirement_years
-                )
+            with st.spinner("Running Monte Carlo simulations for all scenarios..."):
+                # Define three scenarios with hardcoded parameters
+                scenarios = {
+                    'Optimistic': {
+                        'return': 0.07,
+                        'return_volatility': 0.10,
+                        'inflation': 0.025,
+                        'inflation_volatility': 0.015
+                    },
+                    'Realistic': {
+                        'return': 0.05,
+                        'return_volatility': 0.12,
+                        'inflation': 0.03,
+                        'inflation_volatility': 0.02
+                    },
+                    'Pessimistic': {
+                        'return': 0.03,
+                        'return_volatility': 0.15,
+                        'inflation': 0.04,
+                        'inflation_volatility': 0.03
+                    }
+                }
                 
-                # Run simulation
-                results = simulator.run_simulation()
+                # Run simulation for each scenario
+                scenario_results = {}
+                for scenario_name, params in scenarios.items():
+                    simulator = MonteCarloSimulator(
+                        current_corpus=target_corpus,
+                        monthly_expenses=monthly_expenses,
+                        expected_inflation=params['inflation'],
+                        expected_return=params['return'],
+                        inflation_volatility=params['inflation_volatility'],
+                        return_volatility=params['return_volatility'],
+                        num_simulations=1000,
+                        max_years=max_retirement_years
+                    )
+                    scenario_results[scenario_name] = simulator.run_simulation()
                 
                 # Display results
-                display_results(results, retirement_age, life_expectancy, simulator, target_corpus)
+                display_results(scenario_results, retirement_age, life_expectancy, target_corpus, max_retirement_years)
     else:
         st.info("👆 Configure your parameters and click 'Run Simulation' to see results")
 
-def display_results(results, retirement_age, life_expectancy, simulator, target_corpus):
+def display_results(scenario_results, retirement_age, life_expectancy, target_corpus, max_retirement_years):
     st.header("📈 Simulation Results")
     
-    # Primary summary sentence
-    median_years = results['median_years']
-    optimistic_years = results['optimistic_years']
-    conservative_years = results['pessimistic_years']
     corpus_formatted = format_indian_number(target_corpus)
-    max_retirement_years = life_expectancy - retirement_age
     
-    # Check if corpus survives the full retirement period in all scenarios
-    if results.get('all_scenarios_survive', False):
-        # Show remaining corpus values instead of years
-        final_conservative = format_indian_number(results['final_corpus_conservative'])
-        final_median = format_indian_number(results['final_corpus_median'])
-        final_optimistic = format_indian_number(results['final_corpus_optimistic'])
+    # Display results for all three scenarios side-by-side
+    st.markdown("### 📊 Scenario Comparison")
+    
+    # Create three columns for the scenarios
+    col1, col2, col3 = st.columns(3)
+    
+    # Optimistic Scenario
+    with col1:
+        st.markdown("#### 🌟 Optimistic")
+        opt_results = scenario_results['Optimistic']
+        opt_median_years = opt_results['median_years']
+        # Calculate success rate: percentage of simulations that lasted full retirement
+        opt_years = np.array(opt_results['years_lasted'])
+        opt_success_rate = (opt_years >= max_retirement_years).sum() / len(opt_years) * 100
         
-        st.markdown(f"""
-        ### Summary
-        🎉 **Great News!** Your retirement corpus of **{corpus_formatted}** is sufficient to cover your entire retirement period of **{max_retirement_years} years** (from age {retirement_age} to {life_expectancy}) in all scenarios. 
+        st.metric("Success Rate", f"{opt_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
+        st.metric("Median Years", f"{opt_median_years:.1f}", help="Median years until corpus depletion across all simulations")
         
-        At the end of your retirement period, your remaining corpus would be:
-        - **{final_median}** in the median scenario
-        - **{final_optimistic}** in the optimistic scenario  
-        - **{final_conservative}** in the conservative scenario
-        """)
-    else:
-        # Show years lasted (original behavior)
-        # Check if values are very close (within 0.5 years) - if so, show more precision
-        year_range = max(median_years, optimistic_years, conservative_years) - min(median_years, optimistic_years, conservative_years)
-        if year_range < 0.5:
-            # Values are very close, show 2 decimal places for clarity
-            st.markdown(f"""
-            ### Summary
-            Based on the data you shared, your retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.2f} years** in the median scenario, **{optimistic_years:.2f} years** in the optimistic scenario, and **{conservative_years:.2f} years** in the conservative scenario.
-            """)
-        else:
-            # Values differ meaningfully, show 1 decimal place
-            st.markdown(f"""
-            ### Summary
-            Based on the data you shared, your retirement corpus of **{corpus_formatted}** is expected to last **{median_years:.1f} years** in the median scenario, **{optimistic_years:.1f} years** in the optimistic scenario, and **{conservative_years:.1f} years** in the conservative scenario.
-            """)
+        st.caption("Return: 7% | Volatility: 10%")
+        st.caption("Inflation: 2.5% | Volatility: 1.5%")
+    
+    # Realistic Scenario
+    with col2:
+        st.markdown("#### ⚖️ Realistic")
+        real_results = scenario_results['Realistic']
+        real_median_years = real_results['median_years']
+        real_years = np.array(real_results['years_lasted'])
+        real_success_rate = (real_years >= max_retirement_years).sum() / len(real_years) * 100
+        
+        st.metric("Success Rate", f"{real_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
+        st.metric("Median Years", f"{real_median_years:.1f}", help="Median years until corpus depletion across all simulations")
+        
+        st.caption("Return: 5% | Volatility: 12%")
+        st.caption("Inflation: 3% | Volatility: 2%")
+    
+    # Pessimistic Scenario
+    with col3:
+        st.markdown("#### 🌧️ Pessimistic")
+        pess_results = scenario_results['Pessimistic']
+        pess_median_years = pess_results['median_years']
+        pess_years = np.array(pess_results['years_lasted'])
+        pess_success_rate = (pess_years >= max_retirement_years).sum() / len(pess_years) * 100
+        
+        st.metric("Success Rate", f"{pess_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
+        st.metric("Median Years", f"{pess_median_years:.1f}", help="Median years until corpus depletion across all simulations")
+        
+        st.caption("Return: 3% | Volatility: 15%")
+        st.caption("Inflation: 4% | Volatility: 3%")
     
     st.markdown("---")
     
-    # Explanation of scenarios
-    st.subheader("📖 Understanding the Scenarios")
-    
-    st.markdown("""
-    **Conservative Scenario**  
-    This represents a cautious outlook where investment returns are lower than expected and inflation is higher. 
-    There's a 75% chance your corpus will last at least this long. Use this for safe planning.
-    """)
-    
-    st.markdown("""
-    **Median Scenario**  
-    This is the middle outcome - half of all simulations show better results, half show worse. 
-    It's the most likely scenario based on your assumptions. A balanced view for planning.
-    """)
-    
-    st.markdown("""
-    **Optimistic Scenario**  
-    This represents favorable conditions with higher returns and lower inflation. 
-    There's a 25% chance your corpus will last this long or more. Don't rely on this alone.
-    """)
-    
-    st.markdown("---")
-    
-    # Recommendations Section
+    # Recommendations based on realistic scenario
     st.subheader("💡 Recommendations")
     
-    # Check if corpus is sufficient for full retirement
-    if conservative_years >= max_retirement_years:
+    if real_success_rate >= 75:
         st.success(f"""
-        ✅ **Your corpus is sufficient!** 
+        ✅ **Your corpus looks good!** 
         
-        Your retirement corpus of **{corpus_formatted}** is enough to cover your entire retirement period of **{max_retirement_years} years** (age {retirement_age} to {life_expectancy}) even in the conservative scenario.
+        In the realistic scenario, your corpus has a **{real_success_rate:.1f}% success rate** of lasting your entire retirement period of **{max_retirement_years} years** (age {retirement_age} to {life_expectancy}).
         
-        You can retire with confidence knowing your savings will likely last throughout your retirement.
+        You can retire with reasonable confidence. Consider the pessimistic scenario for extra safety planning.
         """)
-    elif conservative_years < max_retirement_years * 0.25:
-        # Corpus lasts less than 25% of retirement period - too large a deficit for meaningful estimate
-        st.error(f"""
-        ⚠️ **Your corpus is significantly insufficient!**
+    elif real_success_rate >= 50:
+        st.warning(f"""
+        ⚠️ **Your corpus may be borderline.**
         
-        In the conservative scenario, your corpus of **{corpus_formatted}** will only last **{conservative_years:.1f} years** out of the **{max_retirement_years} years** you need (age {retirement_age} to {life_expectancy}).
-        
-        **The gap is too large to provide a reliable estimate of required corpus.**
-        
-        Your corpus covers less than 25% of your retirement period. Consider a comprehensive review of your retirement strategy:
-        - Substantially increase your retirement savings
-        - Significantly reduce planned monthly expenses
-        - Delay retirement to accumulate more savings
-        - Re-evaluate your retirement timeline and goals
-        """)
-    else:
-        # Calculate required corpus for full retirement
-        # Proportional scaling based on conservative scenario
-        years_shortage = max_retirement_years - conservative_years
-        required_corpus = target_corpus * (max_retirement_years / conservative_years)
-        required_corpus_formatted = format_indian_number(required_corpus)
-        shortage = required_corpus - target_corpus
-        shortage_formatted = format_indian_number(shortage)
-        
-        st.error(f"""
-        ⚠️ **Your corpus may not be sufficient!**
-        
-        In the conservative scenario, your current corpus of **{corpus_formatted}** will only last **{conservative_years:.1f} years** out of the **{max_retirement_years} years** you need (age {retirement_age} to {life_expectancy}).
-        
-        **You may face a shortage of approximately {years_shortage:.1f} years.**
-        
-        **Estimated Target Corpus Required:** **{required_corpus_formatted}**  
-        (Additional **{shortage_formatted}** needed)
+        In the realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years**.
         
         Consider:
         - Increasing your retirement corpus
-        - Reducing monthly expenses
-        - Delaying retirement
-        - Adjusting your investment strategy for better returns
+        - Reducing planned monthly expenses
+        - Having a backup plan for later retirement years
         """)
+    else:
+        # Calculate rough estimate of required corpus based on realistic scenario
+        if real_median_years > 0:
+            estimated_multiplier = max_retirement_years / real_median_years
+            required_corpus = target_corpus * estimated_multiplier
+            required_corpus_formatted = format_indian_number(required_corpus)
+            shortage_formatted = format_indian_number(required_corpus - target_corpus)
+            
+            st.error(f"""
+            ⚠️ **Your corpus is likely insufficient!**
+            
+            In the realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate**. The median duration is **{real_median_years:.1f} years** vs {max_retirement_years} years needed.
+            
+            **Estimated Target Corpus:** **{required_corpus_formatted}**  
+            (Additional **{shortage_formatted}** needed)
+            
+            Consider:
+            - Substantially increasing your retirement savings
+            - Significantly reducing monthly expenses
+            - Delaying retirement to save more
+            """)
+        else:
+            st.error(f"""
+            ⚠️ **Your corpus is significantly insufficient!**
+            
+            Your corpus depletes very quickly in the realistic scenario. Consider a comprehensive review of your retirement strategy:
+            - Substantially increase your retirement savings
+            - Significantly reduce planned monthly expenses
+            - Delay retirement to accumulate more savings
+            """)
     
     st.markdown("---")
     
@@ -287,32 +262,38 @@ def display_results(results, retirement_age, life_expectancy, simulator, target_
         st.markdown(f"""
         **Monte Carlo Simulation Details:**
         
-        - **Number of Simulations:** {simulator.num_simulations:,}
-        - **Expected Inflation:** {simulator.expected_inflation*100:.1f}% (volatility: {simulator.inflation_volatility*100:.1f}%)
-        - **Expected Return:** {simulator.expected_return*100:.1f}% (volatility: {simulator.return_volatility*100:.1f}%)
+        - **Number of Simulations per Scenario:** 1,000
+        - **Total Simulations:** 3,000 (across all three scenarios)
         - **Distribution Model:** Log-normal distribution
         
+        **Scenario Parameters:**
+        
+        **Optimistic:** Best-case market conditions
+        - Return: 7% (volatility: 10%)
+        - Inflation: 2.5% (volatility: 1.5%)
+        
+        **Realistic:** Moderate market conditions  
+        - Return: 5% (volatility: 12%)
+        - Inflation: 3% (volatility: 2%)
+        
+        **Pessimistic:** Challenging market conditions
+        - Return: 3% (volatility: 15%)
+        - Inflation: 4% (volatility: 3%)
+        
         **Why Log-Normal Distribution?**
-        - Ensures rates are always positive (no impossible negative returns)
-        - Better models the multiplicative nature of compound returns
-        - Standard in financial modeling (Black-Scholes, stock prices, etc.)
-        - Realistic asymmetry: +50% and -50% returns are NOT equivalent
+        - Ensures rates are always positive
+        - Better models compound returns
+        - Standard in financial modeling
         
         **Key Assumptions:**
         - Monthly expenses increase with inflation each year
         - Investment returns are applied annually
-        - No additional contributions to corpus during retirement
+        - No additional contributions during retirement
         - Corpus is depleted when it reaches zero
         
-        **Confidence Intervals:**
-        - Conservative (25th percentile): 75% chance corpus lasts at least this long
-        - Median (50th percentile): Most likely scenario
-        - Optimistic (75th percentile): 25% chance corpus lasts this long or more
+        **Success Rate:** Percentage of simulations where corpus lasted the full retirement period ({max_retirement_years} years)
         
-        **Risk Assessment:**
-        - Success rate shows probability of corpus lasting 20+ years
-        - Higher volatility = wider range of possible outcomes
-        - Consider conservative estimates for retirement planning
+        **Median Years:** The middle value across all simulations - half lasted longer, half lasted shorter
         """)
     
     # Footer with LinkedIn link
