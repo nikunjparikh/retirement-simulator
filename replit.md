@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Monte Carlo simulation-based retirement planning application built with Streamlit. The application helps users estimate how long their retirement savings will last under varying market conditions by running multiple simulations with randomized inflation and return rates. Users can input their retirement age, life expectancy, corpus, monthly expenses, expected inflation, and expected return rates to generate probabilistic forecasts of their retirement fund longevity.
+This is a Monte Carlo simulation-based retirement planning application built with Streamlit. The application helps users estimate how long their retirement savings will last under varying market conditions by running three hardcoded scenarios (Optimistic, Realistic, Pessimistic) with 1,000 simulations each. Users input only 5 basic parameters: current age, retirement age, life expectancy, retirement corpus, and monthly expenses. The app automatically runs 3,000 total simulations and displays side-by-side results showing success rate and median years for each scenario, with smart recommendations based on the realistic scenario.
 
 ## Recent Changes (January 2025)
 
@@ -80,6 +80,18 @@ This is a Monte Carlo simulation-based retirement planning application built wit
      - Provides actionable recommendations based on scenario
    - **Dependency Cleanup**: Removed unused imports (NumPy, Pandas, Plotly) after chart removal
 
+10. **Three-Scenario Simplification**: Replaced user-configurable parameters with three hardcoded scenarios (October 2025)
+   - **Removed UI Controls**: Eliminated all inflation/return rate and volatility sliders for maximum simplicity
+   - **Hardcoded Scenarios**: Three preset scenarios automatically run:
+     - **🌟 Optimistic**: Return 7% (volatility 10%), Inflation 2.5% (volatility 1.5%)
+     - **⚖️ Realistic**: Return 5% (volatility 12%), Inflation 3% (volatility 2%)
+     - **🌧️ Pessimistic**: Return 3% (volatility 15%), Inflation 4% (volatility 3%)
+   - **Simulation Count**: Fixed at 1,000 simulations per scenario (3,000 total) for consistency
+   - **Side-by-Side Display**: Three-column layout showing success rate and median years for each scenario
+   - **Success Rate Precision**: Shows 1 decimal place (e.g., 69.2%) to reveal differences between scenarios
+   - **Smart Recommendations**: Based on Realistic scenario with thresholds at 75% and 50% success rates
+   - **User Benefit**: Zero technical knowledge required - users only input 5 basic parameters
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -103,11 +115,12 @@ Preferred communication style: Simple, everyday language.
 - **Decision**: Implement stochastic modeling with log-normal distribution for inflation and return rates
 - **Rationale**: Monte Carlo methods provide probabilistic forecasts that account for market uncertainty
 - **Implementation**: 
-  - Default 2500 simulations for statistical reliability
+  - Fixed 1,000 simulations per scenario (3,000 total) for consistency
+  - Three hardcoded scenarios: Optimistic, Realistic, Pessimistic
   - Maximum 50-year simulation horizon to prevent infinite loops
-  - User-configurable volatility (inflation: 0.5-10%, returns: 0.5-20%)
+  - Hardcoded volatility per scenario (no user configuration)
   - Log-normal distribution ensures positive rates and realistic asymmetry
-- **Pros**: Captures uncertainty, provides confidence intervals, realistic modeling, always positive rates
+- **Pros**: Captures uncertainty, provides scenario comparison, realistic modeling, always positive rates
 - **Cons**: Computationally intensive for large simulation counts
 
 **Number Formatting**: Indian numbering system support
@@ -146,14 +159,15 @@ Preferred communication style: Simple, everyday language.
 **Stochastic Rate Generation**:
 - **Decision**: Use log-normal distribution for inflation and return rate randomization
 - **Parameters**: 
-  - Mean = expected rate (user-configurable)
-  - Volatility = user-configurable (inflation: 0.5-10%, returns: 0.5-20%)
+  - Mean = expected rate (hardcoded per scenario)
+  - Volatility = hardcoded per scenario (optimistic: lower vol, pessimistic: higher vol)
   - Converts to log-normal parameters: mu = ln(m² / √(m² + s²)), sigma = √(ln(1 + (s/m)²))
+  - Three scenarios with different risk-return profiles automatically run
 - **Rationale**: 
   - Log-normal ensures rates are always positive (no artificial flooring)
   - Better models multiplicative compound returns (standard in Black-Scholes)
   - Captures realistic asymmetry in financial returns
-  - User-configurable volatility allows modeling different market conditions
+  - Hardcoded scenarios eliminate need for user to understand volatility
 - **Alternative Considered**: Normal distribution (previous implementation, could produce negative rates)
 
 **Result Aggregation**: Percentile-based analysis
