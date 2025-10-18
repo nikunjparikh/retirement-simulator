@@ -146,11 +146,11 @@ def main():
                     scenario_results[scenario_name] = simulator.run_simulation()
                 
                 # Display results
-                display_results(scenario_results, retirement_age, life_expectancy, target_corpus, max_retirement_years)
+                display_results(scenario_results, retirement_age, life_expectancy, target_corpus, monthly_expenses, max_retirement_years)
     else:
         st.info("👆 Configure your parameters and click 'Run Simulation' to see results")
 
-def display_results(scenario_results, retirement_age, life_expectancy, target_corpus, max_retirement_years):
+def display_results(scenario_results, retirement_age, life_expectancy, target_corpus, monthly_expenses, max_retirement_years):
     st.header("📈 Simulation Results")
     
     corpus_formatted = format_indian_number(target_corpus)
@@ -173,36 +173,58 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         **Your retirement plan looks solid.** Check the pessimistic scenario below for extra safety planning.
         """)
     elif real_success_rate >= 50:
-        st.warning(f"""
-        ## ⚠️ Your Corpus May Be Borderline
-        
-        Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
-        
-        **Recommended Actions:**
-        - 💰 Increase your retirement corpus
-        - 📉 Reduce planned monthly expenses
-        - 📋 Have a backup plan for later retirement years
-        """)
-    else:
-        # Calculate rough estimate of required corpus based on realistic scenario
+        # Calculate specific recommendations for borderline cases
         if real_median_years > 0:
             estimated_multiplier = max_retirement_years / real_median_years
             required_corpus = target_corpus * estimated_multiplier
-            required_corpus_formatted = format_indian_number(required_corpus)
-            shortage_formatted = format_indian_number(required_corpus - target_corpus)
+            additional_savings_needed = required_corpus - target_corpus
+            
+            # Calculate reduced monthly expenses option
+            # Rough approximation: reduce expenses proportionally
+            reduced_expenses = monthly_expenses * (real_median_years / max_retirement_years)
+            
+            st.warning(f"""
+            ## ⚠️ Your Corpus May Be Borderline
+            
+            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
+            
+            **Recommended Actions (choose one or combine):**
+            - 💰 **Save ₹{format_with_commas(additional_savings_needed)}** more ({format_indian_number(additional_savings_needed)})
+            - 📉 **Reduce spending to ₹{format_with_commas(reduced_expenses)}** per month ({format_indian_number(reduced_expenses)})
+            - 📋 Have a backup plan for later retirement years
+            """)
+        else:
+            st.warning(f"""
+            ## ⚠️ Your Corpus May Be Borderline
+            
+            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement.
+            
+            **Recommended Actions:**
+            - 💰 Increase your retirement corpus
+            - 📉 Reduce planned monthly expenses
+            - 📋 Have a backup plan for later retirement years
+            """)
+    else:
+        # Calculate specific recommendations for insufficient corpus
+        if real_median_years > 0:
+            estimated_multiplier = max_retirement_years / real_median_years
+            required_corpus = target_corpus * estimated_multiplier
+            additional_savings_needed = required_corpus - target_corpus
+            
+            # Calculate reduced monthly expenses option
+            reduced_expenses = monthly_expenses * (real_median_years / max_retirement_years)
             
             st.error(f"""
             ## ⚠️ Your Corpus Is Likely Insufficient
             
             Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate**. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
             
-            ### 🎯 Target Corpus: **{required_corpus_formatted}**  
-            *(You need an additional **{shortage_formatted}**)*
+            ### 🎯 Target Corpus: **₹{format_with_commas(required_corpus)}** ({format_indian_number(required_corpus)})
             
-            **Recommended Actions:**
-            - 💰 Substantially increase your retirement savings
-            - 📉 Significantly reduce monthly expenses  
-            - ⏰ Delay retirement to save more
+            **Recommended Actions (choose one or combine):**
+            - 💰 **Save ₹{format_with_commas(additional_savings_needed)}** more ({format_indian_number(additional_savings_needed)})
+            - 📉 **Reduce spending to ₹{format_with_commas(reduced_expenses)}** per month ({format_indian_number(reduced_expenses)})
+            - ⏰ Delay retirement to save more and reduce the retirement period
             """)
         else:
             st.error(f"""
@@ -233,8 +255,18 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         opt_years = np.array(opt_results['years_lasted'])
         opt_success_rate = (opt_years >= max_retirement_years).sum() / len(opt_years) * 100
         
-        st.metric("Success Rate", f"{opt_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
-        st.metric("Median Years", f"{opt_median_years:.1f}", help="Median years until corpus depletion across all simulations")
+        # Color code success rate
+        if opt_success_rate > 80:
+            color = "green"
+        elif opt_success_rate >= 50:
+            color = "orange"
+        else:
+            color = "red"
+        st.markdown(f"**Success Rate:** <span style='color:{color}; font-size:1.5em; font-weight:bold'>{opt_success_rate:.1f}%</span>", unsafe_allow_html=True)
+        
+        # Only show median years if success rate < 50%
+        if opt_success_rate < 50:
+            st.metric("Median depletion year (for failures)", f"{opt_median_years:.1f}", help="Median years until corpus depletion in failed simulations")
         
         st.caption("Return: 12% | Volatility: 22%")
         st.caption("Inflation: 5% | Volatility: 2.5%")
@@ -243,8 +275,18 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
     with col2:
         st.markdown("#### ⚖️ Realistic")
         
-        st.metric("Success Rate", f"{real_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
-        st.metric("Median Years", f"{real_median_years:.1f}", help="Median years until corpus depletion across all simulations")
+        # Color code success rate
+        if real_success_rate > 80:
+            color = "green"
+        elif real_success_rate >= 50:
+            color = "orange"
+        else:
+            color = "red"
+        st.markdown(f"**Success Rate:** <span style='color:{color}; font-size:1.5em; font-weight:bold'>{real_success_rate:.1f}%</span>", unsafe_allow_html=True)
+        
+        # Only show median years if success rate < 50%
+        if real_success_rate < 50:
+            st.metric("Median depletion year (for failures)", f"{real_median_years:.1f}", help="Median years until corpus depletion in failed simulations")
         
         st.caption("Return: 10% | Volatility: 16%")
         st.caption("Inflation: 6% | Volatility: 3%")
@@ -257,8 +299,18 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         pess_years = np.array(pess_results['years_lasted'])
         pess_success_rate = (pess_years >= max_retirement_years).sum() / len(pess_years) * 100
         
-        st.metric("Success Rate", f"{pess_success_rate:.1f}%", help="% of simulations where money lasted full retirement")
-        st.metric("Median Years", f"{pess_median_years:.1f}", help="Median years until corpus depletion across all simulations")
+        # Color code success rate
+        if pess_success_rate > 80:
+            color = "green"
+        elif pess_success_rate >= 50:
+            color = "orange"
+        else:
+            color = "red"
+        st.markdown(f"**Success Rate:** <span style='color:{color}; font-size:1.5em; font-weight:bold'>{pess_success_rate:.1f}%</span>", unsafe_allow_html=True)
+        
+        # Only show median years if success rate < 50%
+        if pess_success_rate < 50:
+            st.metric("Median depletion year (for failures)", f"{pess_median_years:.1f}", help="Median years until corpus depletion in failed simulations")
         
         st.caption("Return: 7% | Volatility: 10%")
         st.caption("Inflation: 8% | Volatility: 4%")
