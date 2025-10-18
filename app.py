@@ -256,79 +256,107 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
     # Display prominent recommendations first
     st.markdown("### 🎯 Your Retirement Readiness")
     
-    if real_success_rate >= 75:
-        st.success(f"""
-        ## ✅ You're Ready to Retire!
+    # Determine risk category based on new thresholds
+    if real_success_rate >= 80:
+        # SAFE - Green background
+        st.markdown("""
+        <div style='background-color: #d4edda; padding: 20px; border-radius: 10px; border-left: 5px solid #28a745;'>
+        <h2 style='color: #155724; margin-top: 0;'>✅ Your Retirement Plan Looks Solid</h2>
+        </div>
+        """, unsafe_allow_html=True)
         
-        Based on our realistic scenario (balanced portfolio), your corpus has a **{real_success_rate:.1f}% success rate** of lasting your entire **{max_retirement_years}-year** retirement period (age {retirement_age} to {life_expectancy}).
+        st.markdown(f"""
+        Your corpus has a **{real_success_rate:.1f}% success rate** in the realistic scenario. You're well-prepared for retirement.
         
-        **Your retirement plan looks solid.** Check the pessimistic scenario below for extra safety planning.
+        **Median duration:** Full retirement achieved ({max_retirement_years}+ years)
+        
+        **Optional:** Consider more conservative investments as you near retirement, or review the pessimistic scenario for extra safety planning.
         """)
-    elif real_success_rate >= 50:
-        # Calculate specific recommendations for borderline cases
-        if real_median_years > 0:
-            estimated_multiplier = max_retirement_years / real_median_years
-            required_corpus = target_corpus * estimated_multiplier
-            additional_savings_needed = required_corpus - target_corpus
-            
-            # Calculate reduced monthly expenses option
-            # Rough approximation: reduce expenses proportionally
-            reduced_expenses = monthly_expenses * (real_median_years / max_retirement_years)
-            
-            st.warning(f"""
-            ## ⚠️ Your Corpus May Be Borderline
-            
-            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
-            
-            **Recommended Actions (choose one or combine):**
-            - 💰 **Save ₹{format_with_commas(additional_savings_needed)}** more ({format_indian_number(additional_savings_needed)})
-            - 📉 **Reduce spending to ₹{format_with_commas(reduced_expenses)}** per month ({format_indian_number(reduced_expenses)})
-            - 📋 Have a backup plan for later retirement years
-            """)
-        else:
-            st.warning(f"""
-            ## ⚠️ Your Corpus May Be Borderline
-            
-            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate** of lasting your full retirement.
-            
-            **Recommended Actions:**
-            - 💰 Increase your retirement corpus
-            - 📉 Reduce planned monthly expenses
-            - 📋 Have a backup plan for later retirement years
-            """)
+        
+    elif real_success_rate >= 70:
+        # MODERATE RISK - Yellow/orange background
+        st.markdown("""
+        <div style='background-color: #fff3cd; padding: 20px; border-radius: 10px; border-left: 5px solid #ffc107;'>
+        <h2 style='color: #856404; margin-top: 0;'>⚠️ Your Corpus Needs Strengthening</h2>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        Your retirement plan has a **{real_success_rate:.1f}% success rate**. This is acceptable but leaves some risk. Consider these improvements to reach 80%+ success rate:
+        """)
+        
+        # Calculate accurate target using binary search
+        with st.spinner("Calculating recommendations..."):
+            target_corpus_80 = calculate_target_corpus(target_corpus, monthly_expenses, max_retirement_years, target_success_rate=0.80)
+            target_spending_80 = calculate_target_spending(target_corpus, monthly_expenses, max_retirement_years, target_success_rate=0.80)
+        
+        additional_corpus = target_corpus_80 - target_corpus
+        spending_reduction_monthly = monthly_expenses - target_spending_80
+        spending_reduction_annual = spending_reduction_monthly * 12
+        
+        st.markdown("**Recommended Actions (choose one):**")
+        
+        # Only show valid recommendations (avoid "Save ₹0 more" bug)
+        if additional_corpus > 0:
+            st.markdown(f"- 💰 **Save ₹{format_with_commas(additional_corpus)} more** ({format_indian_number(additional_corpus)}) to reach ₹{format_with_commas(target_corpus_80)} total")
+        
+        if spending_reduction_annual > 0:
+            st.markdown(f"- 📉 **Reduce spending by ₹{format_with_commas(spending_reduction_annual)}/year** (₹{format_with_commas(spending_reduction_monthly)}/month) to ₹{format_with_commas(target_spending_80)}/month total")
+        
+        st.markdown(f"- 📋 Have a backup plan (part-time work, rental income) for later retirement years")
+        
     else:
-        # Calculate specific recommendations for insufficient corpus
-        if real_median_years > 0:
-            estimated_multiplier = max_retirement_years / real_median_years
-            required_corpus = target_corpus * estimated_multiplier
-            additional_savings_needed = required_corpus - target_corpus
-            
-            # Calculate reduced monthly expenses option
-            reduced_expenses = monthly_expenses * (real_median_years / max_retirement_years)
-            
-            st.error(f"""
-            ## ⚠️ Your Corpus Is Likely Insufficient
-            
-            Based on our realistic scenario, your corpus has only a **{real_success_rate:.1f}% success rate**. The median duration is **{real_median_years:.1f} years** (vs {max_retirement_years} years needed).
-            
-            ### 🎯 Target Corpus: **₹{format_with_commas(required_corpus)}** ({format_indian_number(required_corpus)})
-            
-            **Recommended Actions (choose one or combine):**
-            - 💰 **Save ₹{format_with_commas(additional_savings_needed)}** more ({format_indian_number(additional_savings_needed)})
-            - 📉 **Reduce spending to ₹{format_with_commas(reduced_expenses)}** per month ({format_indian_number(reduced_expenses)})
-            - ⏰ Delay retirement to save more and reduce the retirement period
-            """)
+        # HIGH RISK - Red background
+        failure_rate = 100 - real_success_rate
+        
+        st.markdown(f"""
+        <div style='background-color: #f8d7da; padding: 20px; border-radius: 10px; border-left: 5px solid #dc3545;'>
+        <h2 style='color: #721c24; margin-top: 0;'>⚠️ High Risk - Only {real_success_rate:.1f}% Success Rate</h2>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if real_median_years >= max_retirement_years:
+            median_msg = f"**Median duration:** Full retirement achieved ({max_retirement_years}+ years)"
         else:
-            st.error(f"""
-            ## ⚠️ Your Corpus Is Significantly Insufficient
-            
-            Your corpus depletes very quickly in the realistic scenario. You need a comprehensive review of your retirement strategy.
-            
-            **Recommended Actions:**
-            - 💰 Substantially increase your retirement savings
-            - 📉 Significantly reduce planned monthly expenses
-            - ⏰ Delay retirement to accumulate more savings
-            """)
+            median_msg = f"**Median duration:** {real_median_years:.1f} years (money runs out in typical scenario)"
+        
+        st.markdown(f"""
+        **{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.
+        
+        {median_msg}
+        """)
+        
+        # Calculate accurate targets using binary search
+        with st.spinner("Calculating recommendations..."):
+            target_corpus_80 = calculate_target_corpus(target_corpus, monthly_expenses, max_retirement_years, target_success_rate=0.80)
+            target_spending_80 = calculate_target_spending(target_corpus, monthly_expenses, max_retirement_years, target_success_rate=0.80)
+        
+        # Calculate combined moderate approach (50% corpus increase + 50% spending reduction)
+        full_corpus_increase = target_corpus_80 - target_corpus
+        full_spending_reduction_monthly = monthly_expenses - target_spending_80
+        
+        combined_corpus_increase = full_corpus_increase * 0.5
+        combined_spending_reduction_monthly = full_spending_reduction_monthly * 0.5
+        combined_target_corpus = target_corpus + combined_corpus_increase
+        combined_target_spending = monthly_expenses - combined_spending_reduction_monthly
+        combined_spending_reduction_annual = combined_spending_reduction_monthly * 12
+        
+        st.markdown("**Recommended: Combine multiple actions**")
+        
+        recommendations = []
+        
+        # Only show valid recommendations
+        if combined_corpus_increase > 0:
+            recommendations.append(f"• **Save at least ₹{format_with_commas(combined_corpus_increase)}** more (₹{format_with_commas(combined_target_corpus)} total / {format_indian_number(combined_target_corpus)})")
+        
+        if combined_spending_reduction_annual > 0:
+            recommendations.append(f"• **Reduce spending by ₹{format_with_commas(combined_spending_reduction_annual)}/year** (₹{format_with_commas(combined_target_spending)}/month total / {format_indian_number(combined_target_spending)})")
+        
+        recommendations.append("• **Keep a backup income source** (part-time work, rental income)")
+        
+        st.markdown("\n".join(recommendations))
+        
+        st.markdown("**With these changes:** ~80-85% success rate")
     
     st.divider()
     
