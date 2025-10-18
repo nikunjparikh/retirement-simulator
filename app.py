@@ -31,6 +31,98 @@ def format_with_commas(num):
     """Format number with comma separators"""
     return f"{int(num):,}"
 
+def calculate_target_corpus(current_corpus, monthly_expenses, max_years, target_success_rate=0.80, max_iterations=12):
+    """
+    Use binary search to find the corpus amount needed to achieve target success rate.
+    Returns the target corpus amount or None if not found within reasonable bounds.
+    """
+    # Realistic scenario parameters
+    params = {
+        'return': 0.10,
+        'return_volatility': 0.16,
+        'inflation': 0.06,
+        'inflation_volatility': 0.03
+    }
+    
+    # Set search bounds (0.5x to 5x current corpus)
+    low = current_corpus * 0.5
+    high = current_corpus * 5.0
+    
+    for _ in range(max_iterations):
+        mid = (low + high) / 2
+        
+        # Run simulation with this corpus amount
+        simulator = MonteCarloSimulator(
+            current_corpus=mid,
+            monthly_expenses=monthly_expenses,
+            expected_inflation=params['inflation'],
+            expected_return=params['return'],
+            inflation_volatility=params['inflation_volatility'],
+            return_volatility=params['return_volatility'],
+            num_simulations=500,  # Reduced for speed
+            max_years=max_years
+        )
+        results = simulator.run_simulation()
+        years_lasted = np.array(results['years_lasted'])
+        success_rate = (years_lasted >= max_years).sum() / len(years_lasted)
+        
+        # Check if we're close enough to target
+        if abs(success_rate - target_success_rate) < 0.03:  # Within 3%
+            return mid
+        elif success_rate < target_success_rate:
+            low = mid  # Need more corpus
+        else:
+            high = mid  # Can use less corpus
+    
+    # Return the midpoint of final range
+    return (low + high) / 2
+
+def calculate_target_spending(corpus, current_monthly_expenses, max_years, target_success_rate=0.80, max_iterations=12):
+    """
+    Use binary search to find the monthly spending amount that achieves target success rate.
+    Returns the target monthly expenses or None if not found within reasonable bounds.
+    """
+    # Realistic scenario parameters
+    params = {
+        'return': 0.10,
+        'return_volatility': 0.16,
+        'inflation': 0.06,
+        'inflation_volatility': 0.03
+    }
+    
+    # Set search bounds (20% to 100% of current spending)
+    low = current_monthly_expenses * 0.2
+    high = current_monthly_expenses
+    
+    for _ in range(max_iterations):
+        mid = (low + high) / 2
+        
+        # Run simulation with this spending amount
+        simulator = MonteCarloSimulator(
+            current_corpus=corpus,
+            monthly_expenses=mid,
+            expected_inflation=params['inflation'],
+            expected_return=params['return'],
+            inflation_volatility=params['inflation_volatility'],
+            return_volatility=params['return_volatility'],
+            num_simulations=500,  # Reduced for speed
+            max_years=max_years
+        )
+        results = simulator.run_simulation()
+        years_lasted = np.array(results['years_lasted'])
+        success_rate = (years_lasted >= max_years).sum() / len(years_lasted)
+        
+        # Check if we're close enough to target
+        if abs(success_rate - target_success_rate) < 0.03:  # Within 3%
+            return mid
+        elif success_rate < target_success_rate:
+            high = mid  # Need to spend less
+        else:
+            low = mid  # Can spend more
+    
+    # Return the midpoint of final range
+    return (low + high) / 2
+
 def main():
     st.set_page_config(
         page_title="Retirement Corpus Calculator",

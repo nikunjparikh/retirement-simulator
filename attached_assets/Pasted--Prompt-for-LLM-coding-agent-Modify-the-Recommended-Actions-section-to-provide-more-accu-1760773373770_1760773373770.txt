@@ -1,0 +1,96 @@
+**Prompt for LLM coding agent:**
+
+---
+
+Modify the "Recommended Actions" section to provide more accurate and actionable guidance based on success rates. Follow these rules:
+
+**Rule 1: Define risk categories based on realistic scenario success rate**
+
+- If success rate >= 80%: Status is "Safe" (green styling)
+- If success rate >= 70% and < 80%: Status is "Moderate Risk" (yellow/orange styling)
+- If success rate < 70%: Status is "High Risk" (red styling)
+
+**Rule 2: Change messaging based on risk category**
+
+For "Safe" (>= 80% success):
+- Show positive message: "✅ Your Retirement Plan Looks Solid"
+- Text: "Your corpus has an X% success rate. You're well-prepared for retirement."
+- No recommended actions needed, or show optional optimizations like "Consider more aggressive investments for higher growth"
+
+For "Moderate Risk" (70-79% success):
+- Show warning message: "⚠️ Your Corpus Needs Strengthening"  
+- Text: "Your retirement plan has a X% success rate. This is acceptable but leaves some risk. Consider these improvements:"
+- Show 2-3 single action recommendations with calculations
+
+For "High Risk" (< 70% success):
+- Show danger message: "⚠️ High Risk - Only X% Success Rate"
+- Text: "Your retirement plan has a Y% chance of running out of money. This is too risky for retirement."
+- Show combined/multiple action recommendations
+
+**Rule 3: Calculate actionable recommendations**
+
+For all scenarios, you need to calculate:
+
+1. How much additional corpus is needed to reach 80% success rate in the realistic scenario
+2. How much spending reduction (annual) is needed to reach 80% success rate
+3. A combined moderate approach (increase corpus by 50% of target AND reduce spending by 50% of target)
+
+**Implementation approach:**
+
+Use binary search or iterative simulation to find these targets:
+- Start with user's current inputs
+- Run simulation with increased corpus (try +10%, +20%, +30% increments)
+- Find the corpus amount where realistic scenario success rate reaches ~80%
+- Do the same for spending reduction
+- Calculate a combined approach: half the corpus increase + half the spending reduction
+
+**Rule 4: Display format for High Risk scenarios**
+
+```
+⚠️ High Risk - Only [X]% Success Rate
+
+[100-X]% chance your money runs out. This is too risky for retirement.
+
+Recommended: Combine multiple actions
+
+• Save at least ₹[amount1] more (₹[total_corpus] total)
+• Reduce spending by ₹[amount2]/year (₹[new_spending] total)  
+• Keep a backup income source (part-time work, rental income)
+
+With these changes: ~80-85% success rate
+```
+
+The [amount1] should be approximately 50% of the full corpus increase needed to reach 80%.
+The [amount2] should be approximately 50% of the full spending reduction needed to reach 80%.
+
+**Rule 5: Fix the "Save ₹0 more" bug**
+
+Never show "Save ₹0 more" as a recommendation. If the calculation returns 0 or negative amounts, don't display that option at all.
+
+**Rule 6: Fix median years display**
+
+- If success rate >= 50%, display: "Median duration: Full retirement achieved (20+ years)"
+- If success rate < 50%, display: "Median duration: [X] years (money runs out in typical scenario)"
+
+This makes it clear what "median" means in context of success/failure.
+
+**Technical requirements:**
+
+- Add a function `calculate_target_corpus(current_corpus, spending, years, target_success_rate=0.80)` that iteratively runs simulations to find required corpus
+- Add a function `calculate_target_spending(corpus, current_spending, years, target_success_rate=0.80)` that finds required spending reduction
+- Use binary search for efficiency - don't just increment by small amounts
+- Cache these calculations to avoid running too many extra simulations
+- Maximum 10-15 additional simulation runs to find targets (use larger step sizes initially, then narrow down)
+
+**Color coding:**
+
+Apply background colors to the main warning box:
+- Safe: light green background (#d4edda or similar)
+- Moderate Risk: light yellow/orange background (#fff3cd or similar)  
+- High Risk: light red background (#f8d7da or similar)
+
+Update the existing code to implement these changes. Keep the three-scenario comparison section unchanged - only modify the top "Your Retirement Readiness" section.
+
+---
+
+**This should give the LLM agent clear step-by-step instructions. Want me to clarify any part?**
