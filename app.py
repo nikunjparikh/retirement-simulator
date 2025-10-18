@@ -362,7 +362,7 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         Your retirement plan has a **{real_success_rate:.1f}% success rate**. This is acceptable but leaves some risk.
         """)
         
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("")
         st.markdown("---")
         
         # Calculate accurate target using binary search
@@ -420,12 +420,9 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
             median_msg = f"**Median duration:** {real_median_years:.1f} years (money runs out in typical scenario)"
         
         st.markdown(f"**{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
+        st.markdown("")
         st.markdown(median_msg)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("")
         st.markdown("---")
         
         # Calculate accurate targets using binary search
@@ -481,7 +478,7 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
             st.markdown("\n\n".join(recommendations_list), unsafe_allow_html=True)
             
             # Show expected success rate if recommendations are followed
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("")
             if target_corpus_80 is not None and target_spending_80 is not None:
                 st.markdown("""
                 <div style='background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 5px solid #28a745; margin-top: 10px;'>
