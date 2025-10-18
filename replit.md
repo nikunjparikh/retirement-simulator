@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
   - Realistic: Return 10% (volatility 16%), Inflation 6% (volatility 3%)
   - Pessimistic: Return 7% (volatility 10%), Inflation 8% (volatility 4%)
 - **Simulation Precision**: Changed to monthly tracking for fractional year accuracy and enhanced scenario differentiation.
-- **Recommendations Logic**: Smart recommendations based on the Realistic scenario, calculating required additional corpus or spending reduction, and providing guidance based on success rate thresholds (e.g., >80% success, 50-80% borderline, <50% insufficient).
+- **Recommendations Logic**: Smart recommendations based on the Realistic scenario using binary search algorithms to calculate precise targets for 80% success rate. Three risk categories: Safe (≥80%), Moderate (70-79%), High (<70%). Uses achievability pre-checks with Monte Carlo variance safeguards to ensure accurate guidance.
 
 ### System Design Choices
 - **Modular Architecture**: Separates concerns into `app.py` (UI, input, recommendations) and `monte_carlo.py` (simulation logic, calculations) for maintainability.
