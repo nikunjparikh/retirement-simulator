@@ -27,6 +27,10 @@ def format_indian_number(num):
     else:
         return f"{num:.0f}"
 
+def format_with_commas(num):
+    """Format number with comma separators"""
+    return f"{int(num):,}"
+
 def main():
     st.set_page_config(
         page_title="Retirement Corpus Calculator",
@@ -52,9 +56,9 @@ def main():
     )
     
     retirement_age = st.number_input(
-        "Retirement Age", 
+        "When do you want to retire", 
         min_value=40, 
-        max_value=90, 
+        max_value=100, 
         value=60, 
         step=1,
         help="Age at which you plan to retire"
@@ -63,21 +67,21 @@ def main():
     life_expectancy = st.slider(
         "Expected Life Expectancy",
         min_value=70,
-        max_value=90,
+        max_value=100,
         value=80,
         step=1,
         help="Your expected life expectancy in years"
     )
     
     target_corpus = st.number_input(
-        "Retirement Corpus", 
+        "Savings at retirement age", 
         min_value=100000, 
         max_value=1000000000, 
         value=10000000, 
         step=100000,
-        help="Your retirement corpus amount"
+        help="Your total savings when you retire"
     )
-    st.caption(f"💡 That's **{format_indian_number(target_corpus)}**")
+    st.caption(f"💡 That's **{format_with_commas(target_corpus)}** ({format_indian_number(target_corpus)})")
     
     monthly_expenses = st.number_input(
         "Monthly Expenses at Retirement", 
@@ -87,7 +91,7 @@ def main():
         step=5000,
         help="Expected monthly expenses when you retire (will be adjusted for inflation)"
     )
-    st.caption(f"💡 That's **{format_indian_number(monthly_expenses)}** per month")
+    st.caption(f"💡 That's **{format_with_commas(monthly_expenses)}** per month ({format_indian_number(monthly_expenses)})")
     
     run_simulation = st.button("🚀 Run Simulation", type="primary", use_container_width=True)
     
