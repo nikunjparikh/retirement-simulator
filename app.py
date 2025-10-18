@@ -413,14 +413,8 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         </div>
         """, unsafe_allow_html=True)
         
-        if real_median_years >= max_retirement_years:
-            median_msg = f"<strong>Median duration:</strong> Full retirement achieved ({max_retirement_years}+ years)"
-        else:
-            median_msg = f"<strong>Median duration:</strong> {real_median_years:.1f} years (money runs out in typical scenario)"
-        
         st.markdown(f"**{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.")
-        st.markdown(f"<p style='margin-bottom: 5px;'>{median_msg}</p>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px; border: none; border-top: 1px solid #ddd;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin-top: 10px; margin-bottom: 15px; border: none; border-top: 1px solid #ddd;'>", unsafe_allow_html=True)
         
         # Calculate accurate targets using binary search
         with st.spinner("Calculating recommendations..."):
