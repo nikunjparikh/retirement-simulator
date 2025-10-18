@@ -31,6 +31,17 @@ def format_with_commas(num):
     """Format number with comma separators"""
     return f"{int(num):,}"
 
+def format_indian_currency(amount):
+    """Format currency in Indian lakh/crore notation for clear display"""
+    if amount >= 10000000:  # 1 crore or more
+        crores = amount / 10000000
+        return f"₹{crores:.2f} Cr"
+    elif amount >= 100000:  # 1 lakh or more
+        lakhs = amount / 100000
+        return f"₹{lakhs:.2f} lakh"
+    else:
+        return f"₹{amount:,.0f}"
+
 def calculate_target_corpus(current_corpus, monthly_expenses, max_years, target_success_rate=0.80, max_iterations=15):
     """
     Use binary search to find the corpus amount needed to achieve target success rate.
@@ -348,8 +359,11 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
-        Your retirement plan has a **{real_success_rate:.1f}% success rate**. This is acceptable but leaves some risk. Consider these improvements to reach 80%+ success rate:
+        Your retirement plan has a **{real_success_rate:.1f}% success rate**. This is acceptable but leaves some risk.
         """)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
         
         # Calculate accurate target using binary search
         with st.spinner("Calculating recommendations..."):
@@ -357,27 +371,38 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
             target_spending_80, spending_success = calculate_target_spending(target_corpus, monthly_expenses, max_retirement_years, target_success_rate=0.80)
         
         st.markdown("**Recommended Actions (choose one):**")
+        st.markdown("")
         
         # Only show valid recommendations (avoid "Save ₹0 more" bug)
         recommendations_shown = False
+        recommendations_list = []
         
         if target_corpus_80 is not None:
             additional_corpus = target_corpus_80 - target_corpus
             if additional_corpus > 0:
-                st.markdown(f"- 💰 **Save ₹{format_with_commas(additional_corpus)} more** ({format_indian_number(additional_corpus)}) to reach ₹{format_with_commas(target_corpus_80)} total → **{corpus_success*100:.1f}% success rate**")
+                corpus_formatted = format_indian_currency(additional_corpus)
+                total_formatted = format_indian_currency(target_corpus_80)
+                recommendations_list.append(f"""💰 **Save at least {corpus_formatted} more**  
+&nbsp;&nbsp;&nbsp;&nbsp;(Total corpus needed: {total_formatted})  
+&nbsp;&nbsp;&nbsp;&nbsp;→ **{corpus_success*100:.1f}% success rate**""")
                 recommendations_shown = True
         
         if target_spending_80 is not None:
             spending_reduction_monthly = monthly_expenses - target_spending_80
             spending_reduction_annual = spending_reduction_monthly * 12
             if spending_reduction_annual > 0:
-                st.markdown(f"- 📉 **Reduce spending by ₹{format_with_commas(spending_reduction_annual)}/year** (₹{format_with_commas(spending_reduction_monthly)}/month) to ₹{format_with_commas(target_spending_80)}/month total → **{spending_success*100:.1f}% success rate**")
+                recommendations_list.append(f"""📉 **Reduce spending by ₹{spending_reduction_annual:,.0f}/year**  
+&nbsp;&nbsp;&nbsp;&nbsp;(New budget: ₹{target_spending_80:,.0f}/month)  
+&nbsp;&nbsp;&nbsp;&nbsp;→ **{spending_success*100:.1f}% success rate**""")
                 recommendations_shown = True
         
-        if not recommendations_shown:
+        if recommendations_shown:
+            st.markdown("\n\n".join(recommendations_list), unsafe_allow_html=True)
+            st.markdown("")
+            st.markdown(f"""📋 **Have a backup plan**  
+&nbsp;&nbsp;&nbsp;&nbsp;(Part-time work, rental income)""", unsafe_allow_html=True)
+        else:
             st.warning("⚠️ Reaching 80% success requires changes beyond typical adjustments. Consider delaying retirement or consulting a financial advisor.")
-        
-        st.markdown(f"- 📋 Have a backup plan (part-time work, rental income) for later retirement years")
         
     else:
         # HIGH RISK - Red background
@@ -394,11 +419,14 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         else:
             median_msg = f"**Median duration:** {real_median_years:.1f} years (money runs out in typical scenario)"
         
-        st.markdown(f"""
-        **{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.
+        st.markdown(f"**{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.")
         
-        {median_msg}
-        """)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        st.markdown(median_msg)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("---")
         
         # Calculate accurate targets using binary search
         with st.spinner("Calculating recommendations..."):
@@ -421,8 +449,9 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         else:
             # Calculate combined moderate approach (50% corpus increase + 50% spending reduction)
             st.markdown("**Recommended: Combine multiple actions**")
+            st.markdown("")
             
-            recommendations = []
+            recommendations_list = []
             
             # Only show valid recommendations
             if target_corpus_80 is not None:
@@ -431,7 +460,10 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
                 combined_target_corpus = target_corpus + combined_corpus_increase
                 
                 if combined_corpus_increase > 0:
-                    recommendations.append(f"• **Save at least ₹{format_with_commas(combined_corpus_increase)}** more (₹{format_with_commas(combined_target_corpus)} total / {format_indian_number(combined_target_corpus)})")
+                    corpus_increase_formatted = format_indian_currency(combined_corpus_increase)
+                    total_corpus_formatted = format_indian_currency(combined_target_corpus)
+                    recommendations_list.append(f"""💰 **Save at least {corpus_increase_formatted} more**  
+&nbsp;&nbsp;&nbsp;&nbsp;(Total corpus needed: {total_corpus_formatted})""")
             
             if target_spending_80 is not None:
                 full_spending_reduction_monthly = monthly_expenses - target_spending_80
@@ -440,19 +472,26 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
                 combined_spending_reduction_annual = combined_spending_reduction_monthly * 12
                 
                 if combined_spending_reduction_annual > 0:
-                    recommendations.append(f"• **Reduce spending by ₹{format_with_commas(combined_spending_reduction_annual)}/year** (₹{format_with_commas(combined_target_spending)}/month total / {format_indian_number(combined_target_spending)})")
+                    recommendations_list.append(f"""📉 **Reduce spending by ₹{combined_spending_reduction_annual:,.0f}/year**  
+&nbsp;&nbsp;&nbsp;&nbsp;(New budget: ₹{combined_target_spending:,.0f}/month)""")
             
-            recommendations.append("• **Keep a backup income source** (part-time work, rental income)")
+            recommendations_list.append(f"""🔄 **Keep a backup income source**  
+&nbsp;&nbsp;&nbsp;&nbsp;(Part-time work, rental income)""")
             
-            st.markdown("\n".join(recommendations))
+            st.markdown("\n\n".join(recommendations_list), unsafe_allow_html=True)
             
             # Show expected success rate if recommendations are followed
+            st.markdown("<br>", unsafe_allow_html=True)
             if target_corpus_80 is not None and target_spending_80 is not None:
-                st.markdown("**With these changes:** ~80-85% success rate")
+                st.markdown("""
+                <div style='background-color: #d4edda; padding: 15px; border-radius: 5px; border-left: 5px solid #28a745; margin-top: 10px;'>
+                    <strong>✅ With these changes:</strong> Projected success rate of ~80-85% (Safe for retirement)
+                </div>
+                """, unsafe_allow_html=True)
             elif target_corpus_80 is not None:
-                st.markdown(f"**With corpus increase only:** ~{corpus_success*100:.0f}% success rate")
+                st.success(f"✅ With corpus increase only: Projected success rate of ~{corpus_success*100:.0f}%")
             elif target_spending_80 is not None:
-                st.markdown(f"**With spending reduction only:** ~{spending_success*100:.0f}% success rate")
+                st.success(f"✅ With spending reduction only: Projected success rate of ~{spending_success*100:.0f}%")
     
     st.divider()
     
