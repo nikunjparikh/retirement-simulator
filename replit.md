@@ -27,6 +27,7 @@ Preferred communication style: Simple, everyday language.
   - Pessimistic: Return 7% (volatility 10%), Inflation 8% (volatility 4%)
 - **Simulation Precision**: Changed to monthly tracking for fractional year accuracy and enhanced scenario differentiation.
 - **Recommendations Logic**: Smart recommendations based on the Realistic scenario using binary search algorithms to calculate precise targets for 80% success rate. Three risk categories: Safe (≥80%), Moderate (70-79%), High (<70%). Uses achievability pre-checks with Monte Carlo variance safeguards to ensure accurate guidance.
+- **UI Formatting**: Enhanced visual hierarchy with Indian currency formatting (₹X.XX Cr/lakh), proper spacing, indented explanatory text, visual separators, and styled success messages for improved scannability and readability.
 
 ### System Design Choices
 - **Modular Architecture**: Separates concerns into `app.py` (UI, input, recommendations) and `monte_carlo.py` (simulation logic, calculations) for maintainability.
