@@ -362,8 +362,7 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
         Your retirement plan has a **{real_success_rate:.1f}% success rate**. This is acceptable but leaves some risk.
         """)
         
-        st.markdown("")
-        st.markdown("---")
+        st.markdown("<hr style='margin-top: 10px; margin-bottom: 15px; border: none; border-top: 1px solid #ddd;'>", unsafe_allow_html=True)
         
         # Calculate accurate target using binary search
         with st.spinner("Calculating recommendations..."):
@@ -420,10 +419,8 @@ def display_results(scenario_results, retirement_age, life_expectancy, target_co
             median_msg = f"**Median duration:** {real_median_years:.1f} years (money runs out in typical scenario)"
         
         st.markdown(f"**{failure_rate:.1f}% chance your money runs out.** This is too risky for retirement.")
-        st.markdown("")
-        st.markdown(median_msg)
-        st.markdown("")
-        st.markdown("---")
+        st.markdown(f"<p style='margin-bottom: 5px;'>{median_msg}</p>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px; border: none; border-top: 1px solid #ddd;'>", unsafe_allow_html=True)
         
         # Calculate accurate targets using binary search
         with st.spinner("Calculating recommendations..."):
