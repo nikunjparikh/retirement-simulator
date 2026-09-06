@@ -1,4 +1,5 @@
-#This is the main app file
+
+#This is the main app file, it has all the code
 import streamlit as st
 import numpy as np
 from monte_carlo import MonteCarloSimulator
