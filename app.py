@@ -1,3 +1,4 @@
+#This is the main app file
 import streamlit as st
 import numpy as np
 from monte_carlo import MonteCarloSimulator
